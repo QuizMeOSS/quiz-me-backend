@@ -3,7 +3,7 @@ package com.quizme.services;
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;
 import com.quizme.repos.UserCredentialsRepo;
-import com.quizme.utils.PasswordHasher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -11,12 +11,12 @@ import java.util.Optional;
 @Service
 public class UserCredentialsService {
     private final UserCredentialsRepo userCredentialsRepo;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
 
     public UserCredentialsService (UserCredentialsRepo userCredentialsRepo,
-                                  PasswordHasher passwordHasher) {
+                                  PasswordEncoder passwordEncoder) {
         this.userCredentialsRepo = userCredentialsRepo;
-        this.passwordHasher = passwordHasher;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Optional<UserCredentials> findByUserId(User user) {
@@ -30,7 +30,7 @@ public class UserCredentialsService {
      * @param password the plaintext password to be hashed and stored
      */
     public void createCredentialsForUser(User user, String password) {
-        var userCredentials = new UserCredentials(user, passwordHasher.hashPassword(password));
+        var userCredentials = new UserCredentials(user, passwordEncoder.encode(password));
         userCredentialsRepo.save(userCredentials);
     }
 }

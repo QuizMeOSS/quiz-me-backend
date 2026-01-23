@@ -3,13 +3,13 @@ package com.quizme.services;
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;
 import com.quizme.repos.UserCredentialsRepo;
-import com.quizme.utils.PasswordHasher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -23,7 +23,7 @@ class UserCredentialsServiceTest {
     private UserCredentialsRepo userCredentialsRepo;
 
     @Mock
-    private PasswordHasher passwordHasher;
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserCredentialsService userCredentialsService;
@@ -59,7 +59,7 @@ class UserCredentialsServiceTest {
     void createCredentialsForUser_hashesPasswordBeforeSaving() {
         String plain = "mySecret";
         String hashed = "hashedSecret";
-        when(passwordHasher.hashPassword(plain)).thenReturn(hashed);
+        when(passwordEncoder.encode(plain)).thenReturn(hashed);
 
 
         userCredentialsService.createCredentialsForUser(sampleUser, plain);
