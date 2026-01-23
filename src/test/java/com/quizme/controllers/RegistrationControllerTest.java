@@ -8,6 +8,7 @@ import com.quizme.services.result.Result;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 
 @WebMvcTest(RegistrationController.class)
 @AutoConfigureRestTestClient
+@AutoConfigureMockMvc(addFilters = false) // disables Spring Security filters, this is just unit testing
 class RegistrationControllerTest {
     @Autowired
     private RestTestClient restTestClient;
