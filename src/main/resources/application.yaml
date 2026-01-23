@@ -4,8 +4,8 @@ spring:
   profiles:
     active: dev
   datasource:
-    username: <YOUR_DB_USERNAME>
-    password: <YOUR_DB_PASSWORD>
+    username: ${DB_USERNAME}
+    password: ${DB_PW}
   jpa:
     hibernate:
       ddl-auto: validate # validate the created tables schema against the entities, app won't start if they don't match
@@ -18,10 +18,10 @@ spring:
       jks:
         sslbundle:
           key:
-            alias: # can be found by running `keytool -list -v -keystore <your_cert> -storetype PKCS12` and checking "Alias name"
+            alias: ${SSL_CERT_ALIAS}
           keystore:
-            location: classpath:<YOUR_CERT> # or file:<absolute_file_path>
-            password: <YOUR_PW>
+            location: ${SSL_CERT_LOCATION}
+            password: ${SSL_CERT_PW}
             type: PKCS12
 server:
   ssl:
@@ -29,4 +29,4 @@ server:
 
 app:
   auth:
-    pepper: <YOUR_PEPPER_STRING>
+    pepper: ${PEPPER_STRING}

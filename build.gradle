@@ -38,3 +38,10 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+test {
+    // trust the testing certificate
+    systemProperty "javax.net.ssl.trustStore", "$projectDir/src/test/resources/truststore.p12"
+    systemProperty "javax.net.ssl.trustStoreType", "PKCS12"
+    systemProperty "javax.net.ssl.trustStorePassword", "somepassword"
+}
