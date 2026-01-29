@@ -22,7 +22,8 @@ public class PasswordEncoderTest {
     public void testHashMatchesPepperedPassword() {
         String hash = passwordEncoder.encode("secret");
 
-        assertTrue(passwordEncoder.matches("secretpep", hash));
+        // `matches` must add the pepper to the raw password then hash and compare
+        assertTrue(passwordEncoder.matches("secret", hash));
     }
 
     @Test

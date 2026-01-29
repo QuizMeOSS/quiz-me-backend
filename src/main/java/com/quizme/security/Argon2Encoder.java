@@ -4,9 +4,11 @@ import com.quizme.config.AppProperties;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
+@Component
 public class Argon2Encoder implements PasswordEncoder {
 
     private final AppProperties appProperties;
@@ -34,6 +36,7 @@ public class Argon2Encoder implements PasswordEncoder {
 
     @Override
     public boolean matches(@Nullable CharSequence rawPassword, @Nullable String encodedPassword) {
-        return arg2SpringSecurity.matches(rawPassword, encodedPassword);
+        var pepperedPassword = rawPassword + appProperties.getAuth().getPepper();
+        return arg2SpringSecurity.matches(pepperedPassword, encodedPassword);
     }
 }
