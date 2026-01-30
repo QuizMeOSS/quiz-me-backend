@@ -20,16 +20,21 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	//implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     // For hashing passwords
     implementation 'org.springframework.security:spring-security-crypto'
     runtimeOnly 'org.bouncycastle:bcprov-jdk18on:1.83'
 
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
     runtimeOnly 'org.postgresql:postgresql:42.7.8'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-//	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation("com.h2database:h2:2.4.240")
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -37,4 +42,11 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+test {
+    // trust the testing certificate
+    systemProperty "javax.net.ssl.trustStore", "$projectDir/src/test/resources/truststore.p12"
+    systemProperty "javax.net.ssl.trustStoreType", "PKCS12"
+    systemProperty "javax.net.ssl.trustStorePassword", "somepassword"
 }

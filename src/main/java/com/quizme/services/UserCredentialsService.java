@@ -3,7 +3,7 @@ package com.quizme.services;
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;
 import com.quizme.repos.UserCredentialsRepo;
-import com.quizme.utils.PasswordHasher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -11,12 +11,12 @@ import java.util.Optional;
 @Service
 public class UserCredentialsService {
     private final UserCredentialsRepo userCredentialsRepo;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserCredentialsService (UserCredentialsRepo userCredentialsRepo,
-                                  PasswordHasher passwordHasher) {
+    public UserCredentialsService(UserCredentialsRepo userCredentialsRepo,
+                                  PasswordEncoder passwordEncoder) {
         this.userCredentialsRepo = userCredentialsRepo;
-        this.passwordHasher = passwordHasher;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Optional<UserCredentials> findByUserId(User user) {
@@ -26,11 +26,12 @@ public class UserCredentialsService {
     /**
      * Create and save UserCredentials for the given user with the provided password.
      * The password is hashed before being stored.
-     * @param user the User entity to associate the credentials with
+     *
+     * @param user     the User entity to associate the credentials with
      * @param password the plaintext password to be hashed and stored
      */
     public void createCredentialsForUser(User user, String password) {
-        var userCredentials = new UserCredentials(user, passwordHasher.hashPassword(password));
+        var userCredentials = new UserCredentials(user, passwordEncoder.encode(password));
         userCredentialsRepo.save(userCredentials);
     }
 }
