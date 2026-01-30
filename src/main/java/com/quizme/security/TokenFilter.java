@@ -46,6 +46,9 @@ public class TokenFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> extractAccessToken(HttpServletRequest request) {
+        if(request.getCookies() == null){
+            return Optional.empty();
+        }
         return Arrays.stream(request.getCookies())
                 .filter(c -> "access_token".equals(c.getName()))
                 .map(Cookie::getValue)
