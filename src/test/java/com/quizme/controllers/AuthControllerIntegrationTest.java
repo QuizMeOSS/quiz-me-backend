@@ -1,5 +1,6 @@
 package com.quizme.controllers;
 
+import com.quizme.config.AppProperties;
 import com.quizme.dto.ApiError;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.entities.User;
@@ -19,13 +20,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureRestTestClient
-class RegistrationControllerIntegrationTest {
+class AuthControllerIntegrationTest {
     @Autowired
     private RestTestClient restTestClient;
     @Autowired
     private ResultToResponseEntityMapper mapper;
     @Autowired
     private RegistrationService service;
+    @Autowired
+    private AppProperties appProperties;
 
     // Clean up database after each test
     @Autowired
