@@ -116,10 +116,10 @@ class JwtUtilTest {
     }
 
     @Test
-    void testGetUserNameFromToken_ReturnsSubject() {
+    void testGetUserName_ReturnsSubject() {
         var token = jwtUtil.generateAccessToken(SUBJECT);
 
-        var username = jwtUtil.getUsernameFromToken(token);
+        var username = jwtUtil.getUsername(token);
 
         assertEquals(SUBJECT, username);
     }

@@ -42,9 +42,15 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getUsername(String token) {
         return getTokenClaims(token)
                 .getSubject();
+    }
+
+    public boolean isExpired(String token){
+        return getTokenClaims(token)
+                .getExpiration()
+                .before(new Date());
     }
 
     private Claims getTokenClaims(String token) {

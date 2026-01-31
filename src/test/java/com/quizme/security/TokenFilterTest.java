@@ -43,7 +43,7 @@ class TokenFilterTest {
     @Test
     void testChainNextIsInvokedWhenAuthenticated() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of(""));
-        when(jwtUtil.getUsernameFromToken(any())).thenReturn("email");
+        when(jwtUtil.getUsername(any())).thenReturn("email");
         when(userDetailsService.loadUserByUsername(any())).thenReturn(mock(UserDetails.class));
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
@@ -76,13 +76,13 @@ class TokenFilterTest {
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
 
-        verify(jwtUtil).getUsernameFromToken("theToken");
+        verify(jwtUtil).getUsername("theToken");
     }
 
     @Test
     void testUserLoadedByName() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
-        when(jwtUtil.getUsernameFromToken("theToken")).thenReturn("theUser");
+        when(jwtUtil.getUsername("theToken")).thenReturn("theUser");
         when(userDetailsService.loadUserByUsername("theUser")).thenReturn(mock(UserDetails.class));
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
@@ -96,7 +96,7 @@ class TokenFilterTest {
     @Test
     void testSecurityContextHoldsAuthenticatedUser() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
-        when(jwtUtil.getUsernameFromToken("theToken")).thenReturn("theUser");
+        when(jwtUtil.getUsername("theToken")).thenReturn("theUser");
         when(userDetailsService.loadUserByUsername("theUser")).thenReturn(
                 User.builder()
                         .username("theUser").build()

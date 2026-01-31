@@ -48,7 +48,7 @@ public class TokenFilter extends OncePerRequestFilter {
 
     private void setUserAsAuthenticated(HttpServletRequest request, String accessToken) {
         try {
-            var username = jwtUtil.getUsernameFromToken(accessToken);
+            var username = jwtUtil.getUsername(accessToken);
             var user = userDetailsService.loadUserByUsername(username);
             setAsAuthenticated(request, user);
         } catch (UsernameNotFoundException e) {
