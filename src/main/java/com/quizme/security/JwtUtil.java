@@ -2,6 +2,7 @@ package com.quizme.security;
 
 import com.quizme.config.AppProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -48,9 +49,12 @@ public class JwtUtil {
     }
 
     public boolean isExpired(String token){
-        return getTokenClaims(token)
-                .getExpiration()
-                .before(new Date());
+        try{
+            getTokenClaims(token);
+            return false;
+        }catch (ExpiredJwtException e){
+            return true;
+        }
     }
 
     private Claims getTokenClaims(String token) {
