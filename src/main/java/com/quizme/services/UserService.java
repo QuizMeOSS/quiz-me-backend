@@ -1,6 +1,8 @@
 package com.quizme.services;
 
+import com.quizme.dto.TokensDto;
 import com.quizme.repos.UserRepo;
+import com.quizme.services.result.Result;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,5 +30,10 @@ public class UserService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .build();
+    }
+
+    public Result<TokensDto> refreshToken(String refreshToken) {
+        // TODO: implement
+        throw new UnsupportedOperationException();
     }
 }
