@@ -1,5 +1,6 @@
 package com.quizme.controllers;
 
+import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.dto.TokensDto;
@@ -21,10 +22,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -119,5 +123,82 @@ class AuthControllerTest {
                 .exchange()
                 .expectCookie()
                 .exists(CookieUtil.REFRESH_TOKEN_COOKIE_NAME);
+    }
+
+    @Test
+    void refresh_returnsBadRequest_whenNullCookies() {
+        restTestClient.get()
+                .uri("/refresh")
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
+                    assertEquals(HttpStatus.BAD_REQUEST.name(), error.getResponseBody().error());
+                    assertEquals("Missing refresh token cookie", error.getResponseBody().message());
+                    assertEquals("/refresh", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void refresh_returnsBadRequest_whenRefreshTokenCookieNotFound() {
+        restTestClient.get()
+                .uri("/refresh")
+                .cookie("someOtherCookie", "abc")
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
+                    assertEquals(HttpStatus.BAD_REQUEST.name(), error.getResponseBody().error());
+                    assertEquals("Missing refresh token cookie", error.getResponseBody().message());
+                    assertEquals("/refresh", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void refresh_returnsError_whenTokenGenerationFails() {
+        when(cookieUtil.getCookieValue(any(), any())).thenReturn(Optional.of(""));
+        Result<TokensDto> result = Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "something wrong"));
+        when(userService.refreshToken(any())).thenReturn(result);
+
+        restTestClient.get()
+                .uri("/refresh")
+                .cookie(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "xyz")
+                .exchange();
+
+        verify(mapper).map(result, "/refresh");
+    }
+
+    @Test
+    void refresh_refreshTokenStoredInCookie() {
+        when(cookieUtil.getCookieValue(any(), any())).thenReturn(Optional.of(""));
+        when(cookieUtil.createRefreshTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh").build());
+        when(cookieUtil.createAccessTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access").build());
+        Result<TokensDto> result = Result.success(new TokensDto("access", "refresh"));
+        when(userService.refreshToken(any())).thenReturn(result);
+
+        restTestClient.get()
+                .uri("/refresh")
+                .exchange()
+                .expectCookie()
+                .valueEquals(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh");
+    }
+
+    @Test
+    void refresh_accessTokenStoredInCookie() {
+        when(cookieUtil.getCookieValue(any(), any())).thenReturn(Optional.of(""));
+        when(cookieUtil.createRefreshTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh").build());
+        when(cookieUtil.createAccessTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access").build());
+        Result<TokensDto> result = Result.success(new TokensDto("access", "refresh"));
+        when(userService.refreshToken(any())).thenReturn(result);
+
+        restTestClient.get()
+                .uri("/refresh")
+                .exchange()
+                .expectCookie()
+                .valueEquals(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access");
     }
 }

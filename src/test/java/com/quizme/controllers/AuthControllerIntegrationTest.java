@@ -7,7 +7,11 @@ import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
+import com.quizme.security.JwtUtil;
 import com.quizme.services.RegistrationService;
+import com.quizme.services.result.FailureReason;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +22,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -36,6 +42,8 @@ class AuthControllerIntegrationTest {
     private AppProperties appProperties;
     @Autowired
     private UserRepo userRepo;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // Clean up database after each test
     @Autowired
@@ -188,5 +196,60 @@ class AuthControllerIntegrationTest {
                 .sameSite("refresh_token", "Strict")
                 .expectCookie()
                 .maxAge("refresh_token", Duration.ofSeconds(appProperties.getAuth().getJwt().getRefreshTokenDuration() / 1000));
+    }
+
+    @Test
+    void refresh_TokensStoredInCookie_whenProvidedRefreshTokenIsValid() {
+        registrationService.register(new RegisterCredentialsRequestDto("name", "email", "pw1"));
+        var refreshToken = jwtUtil.generateRefreshToken("email");
+
+        restTestClient.get()
+                .uri("/refresh")
+                .cookie("refresh_token", refreshToken)
+                .exchange()
+                .expectCookie()
+                .httpOnly("access_token", true)
+                .expectCookie()
+                .secure("access_token", true)
+                .expectCookie()
+                .path("access_token", "/")
+                .expectCookie()
+                .sameSite("access_token", "Strict")
+                .expectCookie()
+                .maxAge("access_token", Duration.ofSeconds(appProperties.getAuth().getJwt().getAccessTokenDuration() / 1000))
+                .expectCookie()
+                .httpOnly("refresh_token", true)
+                .expectCookie()
+                .secure("refresh_token", true)
+                .expectCookie()
+                .path("refresh_token", "/refresh")
+                .expectCookie()
+                .sameSite("refresh_token", "Strict")
+                .expectCookie()
+                .maxAge("refresh_token", Duration.ofSeconds(appProperties.getAuth().getJwt().getRefreshTokenDuration() / 1000));
+    }
+
+    @Test
+    void refresh_returnsError_whenProvidedRefreshTokenExpired() {
+        registrationService.register(new RegisterCredentialsRequestDto("name", "email", "pw1"));
+        var refreshToken = Jwts.builder()
+                .subject("email")
+                .issuedAt(new Date())
+                .expiration(new Date(new Date().getTime() + 1)) // 1 millisecond expiry
+                .signWith(Keys.hmacShaKeyFor(appProperties.getAuth().getJwt().getSecret()
+                        .getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        restTestClient.get()
+                .uri("/refresh")
+                .cookie("refresh_token", refreshToken)
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    assertEquals(new ApiError(HttpStatus.BAD_REQUEST.value(),
+                            FailureReason.VALIDATION_FAILED.name(),
+                            "Refresh token has expired",
+                            "/refresh"), error.getResponseBody());
+                });
     }
 }
