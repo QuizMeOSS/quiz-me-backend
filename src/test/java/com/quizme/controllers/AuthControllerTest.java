@@ -2,7 +2,7 @@ package com.quizme.controllers;
 
 import com.quizme.config.AppProperties;
 import com.quizme.dto.CredentialsLoginRequestDto;
-import com.quizme.dto.LoginResponseDto;
+import com.quizme.dto.TokensDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
@@ -70,7 +70,7 @@ class AuthControllerTest {
     @Test
     void login_failureIsMappedToApiError() {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
-        Result<LoginResponseDto> result = Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
+        Result<TokensDto> result = Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
         when(loginService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
@@ -88,7 +88,7 @@ class AuthControllerTest {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
         // make access token duration 1 second (1000 millis)
         when(appProperties.getAuth().getJwt().getAccessTokenDuration()).thenReturn(1000L);
-        var result = Result.success(new LoginResponseDto("access", "refresh"));
+        var result = Result.success(new TokensDto("access", "refresh"));
         when(loginService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
@@ -112,7 +112,7 @@ class AuthControllerTest {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
         // make refresh token duration 10 seconds (10000 millis)
         when(appProperties.getAuth().getJwt().getRefreshTokenDuration()).thenReturn(10000L);
-        var result = Result.success(new LoginResponseDto("access", "refresh"));
+        var result = Result.success(new TokensDto("access", "refresh"));
         when(loginService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()

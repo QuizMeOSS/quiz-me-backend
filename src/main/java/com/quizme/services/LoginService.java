@@ -1,7 +1,7 @@
 package com.quizme.services;
 
 import com.quizme.dto.CredentialsLoginRequestDto;
-import com.quizme.dto.LoginResponseDto;
+import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
@@ -36,7 +36,7 @@ public class LoginService {
      * @param body {@link CredentialsLoginRequestDto} object containing email and password
      * @return {@link Result} containing tokens or error information.
      */
-    public Result<LoginResponseDto> login(CredentialsLoginRequestDto body) {
+    public Result<TokensDto> login(CredentialsLoginRequestDto body) {
         var userOptional = userRepo.findByEmail(body.email());
         if (userOptional.isEmpty()) {
             return Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
@@ -56,9 +56,9 @@ public class LoginService {
         return Result.success(generateTokensForUser(user));
     }
 
-    private LoginResponseDto generateTokensForUser(User user) {
+    private TokensDto generateTokensForUser(User user) {
         var accessToken = jwtUtil.generateAccessToken(user.getEmail());
         var refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
-        return new LoginResponseDto(accessToken, refreshToken);
+        return new TokensDto(accessToken, refreshToken);
     }
 }
