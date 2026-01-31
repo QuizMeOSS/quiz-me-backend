@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(c ->
                         c.requestMatchers("/register").permitAll()
                                 .requestMatchers("/login").permitAll()
+                                .requestMatchers("/refresh").permitAll()
                                 .anyRequest().authenticated()
                 )
                 // by default, spring security asks user to login

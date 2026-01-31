@@ -1,8 +1,8 @@
 package com.quizme.security;
 
+import com.quizme.utils.CookieUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
@@ -16,8 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
 
 /**
  * Responsible for setting user as authenticated if request contains a valid access token.<br>
@@ -29,35 +27,28 @@ public class TokenFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final CookieUtil cookieUtil;
 
     public TokenFilter(UserDetailsService userDetailsService,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       CookieUtil cookieUtil) {
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
+        this.cookieUtil = cookieUtil;
     }
 
     @Override
     public void doFilterInternal(@NonNull HttpServletRequest request,
                                  @NonNull HttpServletResponse response,
                                  @NonNull FilterChain chain) throws IOException, ServletException {
-        var accessTokenOpt = extractAccessToken(request);
+        var accessTokenOpt = cookieUtil.getCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME);
         accessTokenOpt.ifPresent(s -> setUserAsAuthenticated(request, s));
         chain.doFilter(request, response);
     }
 
-    private Optional<String> extractAccessToken(HttpServletRequest request) {
-        if(request.getCookies() == null){
-            return Optional.empty();
-        }
-        return Arrays.stream(request.getCookies())
-                .filter(c -> "access_token".equals(c.getName()))
-                .map(Cookie::getValue)
-                .findAny();
-    }
-
     private void setUserAsAuthenticated(HttpServletRequest request, String accessToken) {
         try {
-            var username = jwtUtil.getUsernameFromToken(accessToken);
+            var username = jwtUtil.getUsername(accessToken);
             var user = userDetailsService.loadUserByUsername(username);
             setAsAuthenticated(request, user);
         } catch (UsernameNotFoundException e) {

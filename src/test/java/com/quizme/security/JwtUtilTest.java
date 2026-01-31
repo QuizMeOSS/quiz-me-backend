@@ -6,13 +6,18 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class JwtUtilTest {
 
     private static final String SECRET_KEY = "793d83ccec5e1b5df2635f318a036d1d4734d64d2238e1e8e4ad9344ac99e509";
@@ -20,21 +25,23 @@ class JwtUtilTest {
     private static final long REFRESH_DURATION = 120_000;
     private static final String SUBJECT = "abc@mail.net";
 
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private AppProperties appProperties;
+
     private JwtUtil jwtUtil;
+
 
     @BeforeEach
     public void before() {
-        AppProperties props = new AppProperties();
-        props.getAuth().setJwt(new AppProperties.Jwt());
-        props.getAuth().getJwt().setAccessTokenDuration(ACCESS_DURATION);
-        props.getAuth().getJwt().setRefreshTokenDuration(REFRESH_DURATION);
-        props.getAuth().getJwt().setSecret(SECRET_KEY);
+        when(appProperties.getAuth().getJwt().getAccessTokenDuration()).thenReturn(ACCESS_DURATION);
+        when(appProperties.getAuth().getJwt().getRefreshTokenDuration()).thenReturn(REFRESH_DURATION);
+        when(appProperties.getAuth().getJwt().getSecret()).thenReturn(SECRET_KEY);
 
-        jwtUtil = new JwtUtil(props);
+        jwtUtil = new JwtUtil(appProperties);
     }
 
     @Test
-    void testGeneratedAccessTokenIsSigned() {
+    void generatedAccessTokenIsSigned() {
         var key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
         var accessToken = jwtUtil.generateAccessToken(SUBJECT);
@@ -46,7 +53,7 @@ class JwtUtilTest {
     }
 
     @Test
-    void testGeneratedAccessTokenIsSignedWithCorrectKey() {
+    void generatedAccessTokenIsSignedWithCorrectKey() {
         // incorrect key secret -> verification should throw an exception
         // because the token was signed with different key
         var key = Keys.hmacShaKeyFor("ddddddddec5e1b5df2635f318a036d1d4734d64d2238e1e8e4ad9344ac99dddd".getBytes(StandardCharsets.UTF_8));
@@ -61,7 +68,7 @@ class JwtUtilTest {
     }
 
     @Test
-    void testGeneratedRefreshTokenIsSigned() {
+    void generatedRefreshTokenIsSigned() {
         var key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
         var token = jwtUtil.generateRefreshToken(SUBJECT);
@@ -73,7 +80,7 @@ class JwtUtilTest {
     }
 
     @Test
-    void testGeneratedRefreshTokenIsSignedWithCorrectKey() {
+    void generatedRefreshTokenIsSignedWithCorrectKey() {
         // incorrect key secret -> verification should throw an exception
         // because the token was signed with different key
         var key = Keys.hmacShaKeyFor("ddddddddec5e1b5df2635f318a036d1d4734d64d2238e1e8e4ad9344ac99dddd".getBytes(StandardCharsets.UTF_8));
@@ -88,7 +95,7 @@ class JwtUtilTest {
     }
 
     @Test
-    void testAccessTokenHasCorrectDuration() {
+    void accessTokenHasCorrectDuration() {
         var key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
         var token = jwtUtil.generateAccessToken(SUBJECT);
@@ -102,7 +109,7 @@ class JwtUtilTest {
     }
 
     @Test
-    void testRefreshTokenHasCorrectDuration() {
+    void refreshTokenHasCorrectDuration() {
         var key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
         var token = jwtUtil.generateRefreshToken(SUBJECT);
@@ -116,11 +123,28 @@ class JwtUtilTest {
     }
 
     @Test
-    void testGetUserNameFromToken_ReturnsSubject() {
+    void getUserName_ReturnsSubject() {
         var token = jwtUtil.generateAccessToken(SUBJECT);
 
-        var username = jwtUtil.getUsernameFromToken(token);
+        var username = jwtUtil.getUsername(token);
 
         assertEquals(SUBJECT, username);
+    }
+
+    @Test
+    void isExpired_returnsFalseIfTokenValid() {
+        var token = jwtUtil.generateAccessToken(SUBJECT);
+
+        assertFalse(jwtUtil.isExpired(token));
+    }
+
+    @Test
+    void isExpired_returnsTrueIfTokenExpired() {
+        // 1 millisecond only to expire quickly
+        when(appProperties.getAuth().getJwt().getAccessTokenDuration()).thenReturn(1L);
+        jwtUtil = new JwtUtil(appProperties);
+        var token = jwtUtil.generateAccessToken(SUBJECT);
+
+        assertTrue(jwtUtil.isExpired(token));
     }
 }

@@ -1,34 +1,42 @@
 package com.quizme.controllers;
 
-import com.quizme.config.AppProperties;
+import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
-import com.quizme.dto.LoginResponseDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
+import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.security.JwtUtil;
+import com.quizme.security.TokenFilter;
 import com.quizme.services.LoginService;
 import com.quizme.services.RegistrationService;
+import com.quizme.services.UserService;
 import com.quizme.services.result.Failure;
 import com.quizme.services.result.FailureReason;
 import com.quizme.services.result.Result;
+import com.quizme.utils.CookieUtil;
 import org.junit.jupiter.api.Test;
-import org.mockito.Answers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import java.time.Duration;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(controllers = AuthController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = TokenFilter.class))
 @AutoConfigureRestTestClient
 @AutoConfigureMockMvc(addFilters = false) // disables Spring Security filters, this is just unit testing
 class AuthControllerTest {
@@ -39,11 +47,13 @@ class AuthControllerTest {
     @MockitoBean
     private RegistrationService registrationService;
     @MockitoBean
+    private UserService userService;
+    @MockitoBean
     private LoginService loginService;
-    @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS) // avoid mocking Auth() and Jwt() explicitly
-    private AppProperties appProperties;
     @MockitoBean
     private JwtUtil jwtUtil;
+    @MockitoBean
+    private CookieUtil cookieUtil;
 
     @Test
     void register() {
@@ -70,7 +80,7 @@ class AuthControllerTest {
     @Test
     void login_failureIsMappedToApiError() {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
-        Result<LoginResponseDto> result = Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
+        Result<TokensDto> result = Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
         when(loginService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
@@ -86,9 +96,9 @@ class AuthControllerTest {
     @Test
     void login_accessTokenStoredInCookie() {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
-        // make access token duration 1 second (1000 millis)
-        when(appProperties.getAuth().getJwt().getAccessTokenDuration()).thenReturn(1000L);
-        var result = Result.success(new LoginResponseDto("access", "refresh"));
+        when(cookieUtil.createRefreshTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "myToken").build());
+        when(cookieUtil.createAccessTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "myToken").build());
+        var result = Result.success(new TokensDto("access", "refresh"));
         when(loginService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
@@ -96,23 +106,15 @@ class AuthControllerTest {
                 .body(requestDto)
                 .exchange()
                 .expectCookie()
-                .httpOnly("access_token", true)
-                .expectCookie()
-                .secure("access_token", true)
-                .expectCookie()
-                .path("access_token", "/")
-                .expectCookie()
-                .sameSite("access_token", "Strict")
-                .expectCookie()
-                .maxAge("access_token", Duration.ofSeconds(1));
+                .exists(CookieUtil.ACCESS_TOKEN_COOKIE_NAME);
     }
 
     @Test
     void login_refreshTokenStoredInCookie() {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
-        // make refresh token duration 10 seconds (10000 millis)
-        when(appProperties.getAuth().getJwt().getRefreshTokenDuration()).thenReturn(10000L);
-        var result = Result.success(new LoginResponseDto("access", "refresh"));
+        when(cookieUtil.createRefreshTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "myToken").build());
+        when(cookieUtil.createAccessTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "myToken").build());
+        var result = Result.success(new TokensDto("access", "refresh"));
         when(loginService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
@@ -120,14 +122,83 @@ class AuthControllerTest {
                 .body(requestDto)
                 .exchange()
                 .expectCookie()
-                .httpOnly("refresh_token", true)
+                .exists(CookieUtil.REFRESH_TOKEN_COOKIE_NAME);
+    }
+
+    @Test
+    void refresh_returnsBadRequest_whenNullCookies() {
+        restTestClient.get()
+                .uri("/refresh")
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
+                    assertEquals(HttpStatus.BAD_REQUEST.name(), error.getResponseBody().error());
+                    assertEquals("Missing refresh token cookie", error.getResponseBody().message());
+                    assertEquals("/refresh", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void refresh_returnsBadRequest_whenRefreshTokenCookieNotFound() {
+        restTestClient.get()
+                .uri("/refresh")
+                .cookie("someOtherCookie", "abc")
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
+                    assertEquals(HttpStatus.BAD_REQUEST.name(), error.getResponseBody().error());
+                    assertEquals("Missing refresh token cookie", error.getResponseBody().message());
+                    assertEquals("/refresh", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void refresh_returnsError_whenTokenGenerationFails() {
+        when(cookieUtil.getCookieValue(any(), any())).thenReturn(Optional.of(""));
+        Result<TokensDto> result = Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "something wrong"));
+        when(userService.refreshToken(any())).thenReturn(result);
+
+        restTestClient.get()
+                .uri("/refresh")
+                .cookie(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "xyz")
+                .exchange();
+
+        verify(mapper).map(result, "/refresh");
+    }
+
+    @Test
+    void refresh_refreshTokenStoredInCookie() {
+        when(cookieUtil.getCookieValue(any(), any())).thenReturn(Optional.of(""));
+        when(cookieUtil.createRefreshTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh").build());
+        when(cookieUtil.createAccessTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access").build());
+        Result<TokensDto> result = Result.success(new TokensDto("access", "refresh"));
+        when(userService.refreshToken(any())).thenReturn(result);
+
+        restTestClient.get()
+                .uri("/refresh")
+                .exchange()
                 .expectCookie()
-                .secure("refresh_token", true)
+                .valueEquals(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh");
+    }
+
+    @Test
+    void refresh_accessTokenStoredInCookie() {
+        when(cookieUtil.getCookieValue(any(), any())).thenReturn(Optional.of(""));
+        when(cookieUtil.createRefreshTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh").build());
+        when(cookieUtil.createAccessTokenCookie(any()))
+                .thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access").build());
+        Result<TokensDto> result = Result.success(new TokensDto("access", "refresh"));
+        when(userService.refreshToken(any())).thenReturn(result);
+
+        restTestClient.get()
+                .uri("/refresh")
+                .exchange()
                 .expectCookie()
-                .path("refresh_token", "/refresh")
-                .expectCookie()
-                .sameSite("refresh_token", "Strict")
-                .expectCookie()
-                .maxAge("refresh_token", Duration.ofSeconds(10));
+                .valueEquals(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access");
     }
 }

@@ -2,6 +2,7 @@ package com.quizme.security;
 
 import com.quizme.config.AppProperties;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -42,9 +43,18 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getUsername(String token) {
         return getTokenClaims(token)
                 .getSubject();
+    }
+
+    public boolean isExpired(String token){
+        try{
+            getTokenClaims(token);
+            return false;
+        }catch (ExpiredJwtException e){
+            return true;
+        }
     }
 
     private Claims getTokenClaims(String token) {
