@@ -1,7 +1,11 @@
 package com.quizme.services;
 
+import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
 import com.quizme.repos.UserRepo;
+import com.quizme.security.JwtUtil;
+import com.quizme.services.result.Failure;
+import com.quizme.services.result.FailureReason;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,23 +19,27 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
     @Mock
     private UserRepo userRepo;
+    @Mock
+    private JwtUtil jwtUtil;
 
     @InjectMocks
     private UserService userService;
 
     @Test
-    void testIsUserDetailsService() {
+    void implementsUserDetailsService() {
         assertInstanceOf(UserDetailsService.class, userService);
     }
 
     @Test
-    void testExceptionThrownIfUserNotFound() {
+    void loadUser_throwsException_whenUserNotFound() {
         when(userRepo.findByEmail(any())).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> {
@@ -40,7 +48,7 @@ class UserServiceTest {
     }
 
     @Test
-    void testUserObjectIsMappedToUserDetails() {
+    void loadUser_mapsUserObjectToUserDetailsObject() {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(
                 new User("email", "pw")
         ));
@@ -52,5 +60,26 @@ class UserServiceTest {
         );
 
         assertEquals(expectedUserDetails, userDetails);
+    }
+
+    @Test
+    void refreshToken_returnsFailure_whenRefreshTokenExpired() {
+        when(jwtUtil.isExpired(any())).thenReturn(true);
+
+        var result = userService.refreshToken(anyString());
+
+        assertEquals(new Failure(FailureReason.VALIDATION_FAILED, "Refresh token has expired"), result.failure());
+    }
+
+    @Test
+    void refreshToken_returnsTokens_whenRefreshTokenIsValid() {
+        when(jwtUtil.isExpired(any())).thenReturn(false);
+        when(jwtUtil.generateAccessToken(any())).thenReturn("accessToken");
+        when(jwtUtil.generateRefreshToken(any())).thenReturn("refreshToken");
+        when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
+
+        var result = userService.refreshToken(anyString());
+
+        assertEquals(new TokensDto("accessToken", "refreshToken"), result.success());
     }
 }
