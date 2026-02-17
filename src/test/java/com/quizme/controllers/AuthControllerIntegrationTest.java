@@ -8,7 +8,7 @@ import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
-import com.quizme.services.RegistrationService;
+import com.quizme.services.AuthService;
 import com.quizme.services.result.FailureReason;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -37,7 +37,7 @@ class AuthControllerIntegrationTest {
     @Autowired
     private ResultToResponseEntityMapper mapper;
     @Autowired
-    private RegistrationService registrationService;
+    private AuthService registrationService;
     @Autowired
     private AppProperties appProperties;
     @Autowired
