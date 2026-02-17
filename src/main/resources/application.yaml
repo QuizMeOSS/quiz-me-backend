@@ -9,9 +9,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate # validate the created tables schema against the entities, app won't start if they don't match
-  #  sql:
-  #    init:
-  #      mode: always # always run schema and data scripts on startup
+#  sql:
+#    init:
+#      mode: always # always run schema and data scripts on startup
 
   ssl:
     bundle:
@@ -23,6 +23,23 @@ spring:
             location: ${SSL_CERT_LOCATION}
             password: ${SSL_CERT_PW}
             type: PKCS12
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            scope:
+              - read:user
+              - user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+            user-name-attribute: login
 server:
   ssl:
     bundle: sslbundle

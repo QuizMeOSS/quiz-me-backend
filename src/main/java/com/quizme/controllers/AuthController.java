@@ -1,15 +1,12 @@
 package com.quizme.controllers;
 
-import com.quizme.config.AppProperties;
 import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.mappers.ResultToResponseEntityMapper;
-import com.quizme.services.LoginService;
-import com.quizme.services.RegistrationService;
+import com.quizme.services.AuthService;
 import com.quizme.services.UserService;
 import com.quizme.utils.CookieUtil;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -20,47 +17,39 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.Optional;
-
 @RestController
 public class AuthController {
 
     private final ResultToResponseEntityMapper responseMapper;
-    private final LoginService loginService;
-    private final RegistrationService registrationService;
+    private final AuthService authService;
     private final UserService userService;
     private final CookieUtil cookieUtil;
 
     public AuthController(ResultToResponseEntityMapper responseMapper,
-                          LoginService loginService,
-                          RegistrationService registrationService,
+                          AuthService authService,
                           UserService userService,
                           CookieUtil cookieUtil) {
         this.responseMapper = responseMapper;
-        this.loginService = loginService;
-        this.registrationService = registrationService;
+        this.authService = authService;
         this.userService = userService;
         this.cookieUtil = cookieUtil;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterCredentialsRequestDto body, HttpServletRequest request) {
-        var result = registrationService.register(body);
+        var result = authService.register(body);
         return responseMapper.map(result, request.getRequestURI());
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody CredentialsLoginRequestDto body, HttpServletRequest request) {
-        var result = loginService.login(body);
+        var result = authService.login(body);
         if (result.failure() != null) {
             return responseMapper.map(result, request.getRequestURI());
         }
 
         ResponseCookie refreshCookie = cookieUtil.createRefreshTokenCookie(result.success().refreshToken());
-
         ResponseCookie accessCookie = cookieUtil.createAccessTokenCookie(result.success().accessToken());
-
         return ResponseEntity
                 .ok()
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
