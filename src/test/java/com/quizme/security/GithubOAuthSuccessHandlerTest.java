@@ -177,4 +177,65 @@ class GithubOAuthSuccessHandlerTest {
         } catch (RuntimeException _) {
         }
     }
+
+    @Test
+    void tokensAreAddedInResponseCookies() throws IOException {
+        var userEmail = "anEmail";
+        var userId = 2;
+
+        var mockPrincipal = mock(OAuth2User.class);
+        when(mockPrincipal.getAttribute("email")).thenReturn(userEmail);
+        when(mockPrincipal.getAttribute("id")).thenReturn(userId);
+
+        var mockAuth = mock(OAuth2AuthenticationToken.class);
+        when(mockAuth.getPrincipal()).thenReturn(mockPrincipal);
+        when(mockAuth.getName()).thenReturn("Ahmed");
+
+        when(authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, mockAuth.getName(),
+                PROVIDER, Integer.toString(userId))))
+                .thenReturn(new TokensDto("accessToken", "refreshToken"));
+
+        var accessToken = mock(ResponseCookie.class);
+        var refreshToken = mock(ResponseCookie.class);
+        when(cookieUtil.createRefreshTokenCookie("refreshToken")).thenReturn(accessToken);
+        when(cookieUtil.createAccessTokenCookie("accessToken")).thenReturn(refreshToken);
+
+        var httpResponse = mock(HttpServletResponse.class);
+
+        // act
+        successHandler.onSuccess(null, httpResponse, mockAuth);
+
+        // assert
+        verify(httpResponse).addHeader(HttpHeaders.SET_COOKIE, accessToken.toString());
+        verify(httpResponse).addHeader(HttpHeaders.SET_COOKIE, refreshToken.toString());
+    }
+
+    @Test
+    void userRedirectedToFrontendHomePage() throws IOException {
+        var userEmail = "anEmail";
+        var userId = 2;
+
+        var mockPrincipal = mock(OAuth2User.class);
+        when(mockPrincipal.getAttribute("email")).thenReturn(userEmail);
+        when(mockPrincipal.getAttribute("id")).thenReturn(userId);
+
+        var mockAuth = mock(OAuth2AuthenticationToken.class);
+        when(mockAuth.getPrincipal()).thenReturn(mockPrincipal);
+        when(mockAuth.getName()).thenReturn("Ahmed");
+
+        when(authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, mockAuth.getName(),
+                PROVIDER, Integer.toString(userId))))
+                .thenReturn(new TokensDto("accessToken", "refreshToken"));
+
+        when(cookieUtil.createRefreshTokenCookie("refreshToken")).thenReturn(mock(ResponseCookie.class));
+        when(cookieUtil.createAccessTokenCookie("accessToken")).thenReturn(mock(ResponseCookie.class));
+
+        var httpResponse = mock(HttpServletResponse.class);
+
+        // act
+        successHandler.onSuccess(null, httpResponse, mockAuth);
+
+        // assert
+        verify(httpResponse).sendRedirect(appProperties.getFrontendUrl());
+    }
 }
