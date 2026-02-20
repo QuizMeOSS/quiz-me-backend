@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -15,6 +17,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
@@ -24,6 +27,8 @@ import java.util.Map;
 @Component
 public class GithubOAuthSuccessHandler implements OAuthSuccessHandler {
     public static final String PROVIDER = "github";
+    private final Logger logger = LoggerFactory.getLogger(GithubOAuthSuccessHandler.class);
+
     private final RestClient restClient;
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final AuthService authService;
@@ -68,8 +73,8 @@ public class GithubOAuthSuccessHandler implements OAuthSuccessHandler {
                 new SsoLoginDto(userEmail, authentication.getName(),
                         PROVIDER, providerUserId)
         );
-        ResponseCookie refreshCookie = cookieUtil.createRefreshTokenCookie(result.success().refreshToken());
-        ResponseCookie accessCookie = cookieUtil.createAccessTokenCookie(result.success().accessToken());
+        ResponseCookie refreshCookie = cookieUtil.createRefreshTokenCookie(result.refreshToken());
+        ResponseCookie accessCookie = cookieUtil.createAccessTokenCookie(result.accessToken());
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         response.sendRedirect("https://localhost:3000/");
@@ -88,14 +93,20 @@ public class GithubOAuthSuccessHandler implements OAuthSuccessHandler {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
 
-        List<Map<String, Object>> emails =
-                restClient.get()
-                        .uri("https://api.github.com/user/emails")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                        .header(HttpHeaders.USER_AGENT, "quizmeoss")
-                        .retrieve()
-                        .body(new ParameterizedTypeReference<>() {
-                        });
+        List<Map<String, Object>> emails = List.of();
+        try {
+            emails = restClient.get()
+                    .uri("https://api.github.com/user/emails")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .header(HttpHeaders.USER_AGENT, "quizmeoss")
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+        } catch (HttpClientErrorException e) {
+            // do nothing, rest of code will return null anyway
+            logger.error("Failed to fetch user email", e);
+        }
+
 
         // get primary email
         return emails.stream()

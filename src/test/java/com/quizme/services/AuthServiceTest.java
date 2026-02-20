@@ -2,8 +2,11 @@ package com.quizme.services;
 
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
+import com.quizme.dto.SsoLoginDto;
+import com.quizme.entities.ExternalIdentity;
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;
+import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
 import com.quizme.services.result.Failure;
@@ -11,18 +14,20 @@ import com.quizme.services.result.FailureReason;
 import com.quizme.services.result.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -30,6 +35,8 @@ public class AuthServiceTest {
     private UserRepo userRepo;
     @Mock
     private UserCredentialsService userCredentialsService;
+    @Mock
+    ExternalIdentityRepo externalIdentityRepo;
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
@@ -41,12 +48,16 @@ public class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void register_registersNewUser_whenUniqueUsernameAndEmail(){
+    void register_registersNewUser_whenUniqueUsernameAndEmail() {
         var request = new RegisterCredentialsRequestDto("u", "e", "pw");
         when(userRepo.findByEmail("e")).thenReturn(Optional.empty());
         when(userRepo.findByUsername("u")).thenReturn(Optional.empty());
-        // simulate db transaction successful
-        when(transactionTemplate.execute(any())).thenAnswer(_ -> new User("e", "u"));
+        when(transactionTemplate.execute(any(TransactionCallback.class)))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<?> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(null);
+                });
+        when(userRepo.save(any())).thenAnswer(_ -> new User("e", "u"));
 
         var result = authService.register(request);
 
@@ -55,7 +66,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    void register_returnsError_whenUsernameExists(){
+    void register_returnsError_whenUsernameExists() {
         var username = "x";
         var existingUser = new User("e", username);
         when(userRepo.findByUsername(username)).thenReturn(Optional.of(existingUser));
@@ -66,7 +77,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    void register_returnsError_whenEmailAndCredentialsExist(){
+    void register_returnsError_whenEmailAndCredentialsExist() {
         var email = "e";
         var existingUser = new User(email, "x");
         when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
@@ -78,7 +89,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    void register_linksCredentialsToUser_whenEmailExistsButNoCredentials(){
+    void register_linksCredentialsToUser_whenEmailExistsButNoCredentials() {
         var email = "e";
         var existingUsername = "oldUsername";
         var existingUser = new User(email, existingUsername);
@@ -135,4 +146,127 @@ public class AuthServiceTest {
         assertEquals("access", result.success().accessToken());
         assertEquals("refresh", result.success().refreshToken());
     }
+
+    @Test
+    void sso_registersUserAnd3rdPartyIdentity_whenUserNotFound() {
+        String userEmail = "anEmail";
+        String username = "aName";
+        String provider = "x";
+        String providerUserId = "123";
+        User user = new User(userEmail, username);
+        when(userRepo.findByEmail(any())).thenReturn(Optional.empty());
+        when(transactionTemplate.execute(any(TransactionCallback.class)))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<?> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(null);
+                });
+        when(userRepo.save(any())).thenReturn(user);
+
+        // act
+        authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
+
+        // assert
+        // user is created
+        var userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepo).save(userCaptor.capture());
+        assertEquals(userEmail, userCaptor.getValue().getEmail());
+        assertEquals(username, userCaptor.getValue().getUsername());
+
+        // 3rd party identity is created
+        var identityCaptor = ArgumentCaptor.forClass(ExternalIdentity.class);
+        verify(externalIdentityRepo).save(identityCaptor.capture());
+        assertEquals(userEmail, identityCaptor.getValue().getProviderUserEmail());
+        assertEquals(username, identityCaptor.getValue().getProviderUsername());
+        assertEquals(provider, identityCaptor.getValue().getProvider());
+        assertEquals(providerUserId, identityCaptor.getValue().getProviderUserId());
+    }
+
+    @Test
+    void sso_tokenGeneratedForNewUser_whenUserNotFound() {
+        String userEmail = "anEmail";
+        String username = "aName";
+        String provider = "x";
+        String providerUserId = "123";
+        User user = new User(userEmail, username);
+        when(userRepo.findByEmail(any())).thenReturn(Optional.empty());
+        when(transactionTemplate.execute(any())).thenReturn(user);
+        when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
+        when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
+
+        // act
+        var tokens = authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
+
+        // assert
+        assertNotNull(tokens.accessToken());
+        assertNotNull(tokens.refreshToken());
+
+    }
+
+    @Test
+    void sso_registersIdentity_whenUserFoundButNo3rdPartyIdentity() {
+        String userEmail = "anEmail";
+        String username = "aName";
+        String provider = "x";
+        String providerUserId = "123";
+        User user = new User(userEmail, username);
+        when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(Optional.empty());
+
+
+        // act
+        authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
+
+        // assert
+        var captor = ArgumentCaptor.forClass(ExternalIdentity.class);
+        verify(externalIdentityRepo).save(captor.capture());
+        assertEquals(userEmail, captor.getValue().getProviderUserEmail());
+        assertEquals(username, captor.getValue().getProviderUsername());
+        assertEquals(provider, captor.getValue().getProvider());
+        assertEquals(providerUserId, captor.getValue().getProviderUserId());
+    }
+
+    @Test
+    void sso_tokenGenerated_whenUserFoundButNo3rdPartyIdentity() {
+        String userEmail = "anEmail";
+        String username = "aName";
+        String provider = "x";
+        String providerUserId = "123";
+        User user = new User(userEmail, username);
+        when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(Optional.empty());
+        when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
+        when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
+
+        // act
+        var tokens = authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
+
+        // assert
+        assertNotNull(tokens.accessToken());
+        assertNotNull(tokens.refreshToken());
+
+    }
+
+    @Test
+    void sso_tokenGenerated_whenUserAnd3rdPartyIdentityFound() {
+        String userEmail = "anEmail";
+        String username = "aName";
+        String provider = "x";
+        String providerUserId = "123";
+        User user = new User(userEmail, username);
+        when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(Optional.of(
+                new ExternalIdentity(user, provider, providerUserId, username, userEmail)
+        ));
+        when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
+        when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
+
+        // act
+        var tokens = authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
+
+        // assert
+        assertNotNull(tokens.accessToken());
+        assertNotNull(tokens.refreshToken());
+
+    }
+
 }

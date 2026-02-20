@@ -42,6 +42,18 @@ public class ExternalIdentity {
         return userId;
     }
 
+    public String getProvider() {
+        return provider;
+    }
+
+    public String getProviderUserId() {
+        return providerUserId;
+    }
+
+    public String getProviderUsername() {
+        return providerUsername;
+    }
+
     public String getProviderUserEmail() {
         return providerUserEmail;
     }

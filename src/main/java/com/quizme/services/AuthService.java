@@ -122,7 +122,7 @@ public class AuthService {
         return Result.success(generateTokensForUser(user));
     }
 
-    public Result<TokensDto> ssoRegisterOrLogin(SsoLoginDto loginDto){
+    public TokensDto ssoRegisterOrLogin(SsoLoginDto loginDto){
         var existingUserOpt = userRepo.findByEmail(loginDto.email());
         if(existingUserOpt.isEmpty()){
             existingUserOpt = Optional.of(registerUserAndExternalIdentity(loginDto));
@@ -132,7 +132,7 @@ public class AuthService {
                 linkExternalIdentityToUser(existingUserOpt.get(), loginDto);
             }
         }
-        return Result.success(generateTokensForUser(existingUserOpt.get()));
+        return generateTokensForUser(existingUserOpt.get());
     }
 
     private User registerUserAndExternalIdentity(SsoLoginDto dto){
