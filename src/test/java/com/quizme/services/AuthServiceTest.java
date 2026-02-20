@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -210,7 +211,31 @@ public class AuthServiceTest {
         String providerUserId = "123";
         User user = new User(userEmail, username);
         when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(externalIdentityRepo.findByUserId(user)).thenReturn(Optional.empty());
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(List.of());
+
+
+        // act
+        authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
+
+        // assert
+        var captor = ArgumentCaptor.forClass(ExternalIdentity.class);
+        verify(externalIdentityRepo).save(captor.capture());
+        assertEquals(userEmail, captor.getValue().getProviderUserEmail());
+        assertEquals(username, captor.getValue().getProviderUsername());
+        assertEquals(provider, captor.getValue().getProvider());
+        assertEquals(providerUserId, captor.getValue().getProviderUserId());
+    }
+
+    @Test
+    void sso_registersIdentity_whenUserFoundButNo3rdPartyIdentityWithSameProvider() {
+        String userEmail = "anEmail";
+        String username = "aName";
+        String provider = "x";
+        String providerUserId = "123";
+        User user = new User(userEmail, username);
+        ExternalIdentity externalIdentity = new ExternalIdentity(user, "otherProvider", providerUserId, username, userEmail);
+        when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(List.of(externalIdentity));
 
 
         // act
@@ -233,7 +258,7 @@ public class AuthServiceTest {
         String providerUserId = "123";
         User user = new User(userEmail, username);
         when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(externalIdentityRepo.findByUserId(user)).thenReturn(Optional.empty());
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(List.of());
         when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
         when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
 
@@ -254,7 +279,7 @@ public class AuthServiceTest {
         String providerUserId = "123";
         User user = new User(userEmail, username);
         when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
-        when(externalIdentityRepo.findByUserId(user)).thenReturn(Optional.of(
+        when(externalIdentityRepo.findByUserId(user)).thenReturn(List.of(
                 new ExternalIdentity(user, provider, providerUserId, username, userEmail)
         ));
         when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");

@@ -9,7 +9,7 @@ public class ExternalIdentity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User userId;
 
@@ -25,7 +25,8 @@ public class ExternalIdentity {
     @Column(name = "provider_user_email", nullable = false)
     private String providerUserEmail;
 
-    protected ExternalIdentity() {}
+    protected ExternalIdentity() {
+    }
 
     public ExternalIdentity(User userId, String provider,
                             String providerUserId,

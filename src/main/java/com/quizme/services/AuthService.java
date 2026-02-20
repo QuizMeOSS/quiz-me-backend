@@ -128,7 +128,9 @@ public class AuthService {
             existingUserOpt = Optional.of(registerUserAndExternalIdentity(loginDto));
         } else {
             var externalIdentityOpt = externalIdentityRepo.findByUserId(existingUserOpt.get());
-            if(externalIdentityOpt.isEmpty()){
+            if(externalIdentityOpt.isEmpty()
+                    // we need to create a different record for GitHub, Google, etc...
+                    || externalIdentityOpt.stream().noneMatch(i -> i.getProvider().equals(loginDto.provider()))){
                 linkExternalIdentityToUser(existingUserOpt.get(), loginDto);
             }
         }
