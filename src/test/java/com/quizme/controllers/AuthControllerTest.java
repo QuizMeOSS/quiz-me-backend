@@ -8,8 +8,7 @@ import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.security.JwtUtil;
 import com.quizme.security.TokenFilter;
-import com.quizme.services.LoginService;
-import com.quizme.services.RegistrationService;
+import com.quizme.services.AuthService;
 import com.quizme.services.UserService;
 import com.quizme.services.result.Failure;
 import com.quizme.services.result.FailureReason;
@@ -45,11 +44,9 @@ class AuthControllerTest {
     @MockitoBean
     private ResultToResponseEntityMapper mapper;
     @MockitoBean
-    private RegistrationService registrationService;
+    private AuthService authService;
     @MockitoBean
     private UserService userService;
-    @MockitoBean
-    private LoginService loginService;
     @MockitoBean
     private JwtUtil jwtUtil;
     @MockitoBean
@@ -60,7 +57,7 @@ class AuthControllerTest {
         var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
         var createdUser = new User("e", "u");
         var result = Result.success(createdUser);
-        when(registrationService.register(requestDto)).thenReturn(result);
+        when(authService.register(requestDto)).thenReturn(result);
         when(mapper.map(result, "/register"))
                 .thenAnswer(_ ->
                         ResponseEntity.ok(createdUser)
@@ -81,7 +78,7 @@ class AuthControllerTest {
     void login_failureIsMappedToApiError() {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
         Result<TokensDto> result = Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
-        when(loginService.login(requestDto)).thenReturn(result);
+        when(authService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
                 .uri("/login")
@@ -99,7 +96,7 @@ class AuthControllerTest {
         when(cookieUtil.createRefreshTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "myToken").build());
         when(cookieUtil.createAccessTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "myToken").build());
         var result = Result.success(new TokensDto("access", "refresh"));
-        when(loginService.login(requestDto)).thenReturn(result);
+        when(authService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
                 .uri("/login")
@@ -115,7 +112,7 @@ class AuthControllerTest {
         when(cookieUtil.createRefreshTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "myToken").build());
         when(cookieUtil.createAccessTokenCookie(any())).thenReturn(ResponseCookie.from(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "myToken").build());
         var result = Result.success(new TokensDto("access", "refresh"));
-        when(loginService.login(requestDto)).thenReturn(result);
+        when(authService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
                 .uri("/login")
