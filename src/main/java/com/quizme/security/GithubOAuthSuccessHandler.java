@@ -1,5 +1,6 @@
 package com.quizme.security;
 
+import com.quizme.config.AppProperties;
 import com.quizme.dto.SsoLoginDto;
 import com.quizme.services.AuthService;
 import com.quizme.utils.CookieUtil;
@@ -33,15 +34,18 @@ public class GithubOAuthSuccessHandler implements OAuthSuccessHandler {
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final AuthService authService;
     private final CookieUtil cookieUtil;
+    private final AppProperties appProperties;
 
     public GithubOAuthSuccessHandler(RestClient restClient,
                                      OAuth2AuthorizedClientService authorizedClientService,
                                      AuthService authService,
-                                     CookieUtil cookieUtil) {
+                                     CookieUtil cookieUtil,
+                                     AppProperties appProperties) {
         this.restClient = restClient;
         this.authorizedClientService = authorizedClientService;
         this.authService = authService;
         this.cookieUtil = cookieUtil;
+        this.appProperties = appProperties;
     }
 
     @Override
@@ -77,7 +81,7 @@ public class GithubOAuthSuccessHandler implements OAuthSuccessHandler {
         ResponseCookie accessCookie = cookieUtil.createAccessTokenCookie(result.accessToken());
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        response.sendRedirect("https://localhost:3000/");
+        response.sendRedirect(appProperties.getFrontendUrl());
     }
 
     @Nullable

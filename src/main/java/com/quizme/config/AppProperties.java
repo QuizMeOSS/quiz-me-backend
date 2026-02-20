@@ -7,19 +7,39 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private final Auth auth = new Auth();
+    private String frontendUrl;
 
     public Auth getAuth() {
         return auth;
+    }
+
+    public String getFrontendUrl() {
+        return frontendUrl;
+    }
+
+    public void setFrontendUrl(String url){
+        this.frontendUrl = url;
     }
 
     public static class Auth {
         private String pepper;
         private Jwt jwt;
 
-        public String getPepper() { return pepper; }
-        public void setPepper(String pepper) { this.pepper = pepper; }
-        public Jwt getJwt() { return jwt; }
-        public void setJwt(Jwt jwt) { this.jwt = jwt; }
+        public String getPepper() {
+            return pepper;
+        }
+
+        public void setPepper(String pepper) {
+            this.pepper = pepper;
+        }
+
+        public Jwt getJwt() {
+            return jwt;
+        }
+
+        public void setJwt(Jwt jwt) {
+            this.jwt = jwt;
+        }
     }
 
     public static class Jwt {
@@ -28,13 +48,28 @@ public class AppProperties {
         private long accessTokenDuration;
         private long refreshTokenDuration;
 
-        public String getSecret() { return secret; }
-        public void setSecret(String secret) { this.secret = secret; }
+        public String getSecret() {
+            return secret;
+        }
 
-        public long getAccessTokenDuration() { return accessTokenDuration; }
-        public void setAccessTokenDuration(long duration) { this.accessTokenDuration = duration; }
+        public void setSecret(String secret) {
+            this.secret = secret;
+        }
 
-        public long getRefreshTokenDuration() { return refreshTokenDuration; }
-        public void setRefreshTokenDuration(long duration) { this.refreshTokenDuration = duration; }
+        public long getAccessTokenDuration() {
+            return accessTokenDuration;
+        }
+
+        public void setAccessTokenDuration(long duration) {
+            this.accessTokenDuration = duration;
+        }
+
+        public long getRefreshTokenDuration() {
+            return refreshTokenDuration;
+        }
+
+        public void setRefreshTokenDuration(long duration) {
+            this.refreshTokenDuration = duration;
+        }
     }
 }

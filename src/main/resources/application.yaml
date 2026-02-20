@@ -51,3 +51,4 @@ app:
       secret: ${JWT_SECRET}
       access_token_duration: ${JWT_ACCESS_DURATION} # validity of access token in milliseconds
       refresh_token_duration: ${JWT_REFRESH_DURATION}
+  frontend_url: ${FRONTEND_URL}

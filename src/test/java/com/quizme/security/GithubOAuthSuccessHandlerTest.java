@@ -1,5 +1,6 @@
 package com.quizme.security;
 
+import com.quizme.config.AppProperties;
 import com.quizme.dto.SsoLoginDto;
 import com.quizme.dto.TokensDto;
 import com.quizme.services.AuthService;
@@ -38,10 +39,10 @@ class GithubOAuthSuccessHandlerTest {
 
     private MockRestServiceServer mockServer;
 
-    RestClient restClient;
     OAuth2AuthorizedClientService authorizedClientService = mock(OAuth2AuthorizedClientService.class);
     AuthService authService = mock(AuthService.class);
     CookieUtil cookieUtil = mock(CookieUtil.class);
+    AppProperties appProperties = mock(AppProperties.class);
 
     GithubOAuthSuccessHandler successHandler;
 
@@ -52,7 +53,7 @@ class GithubOAuthSuccessHandlerTest {
         RestClient restClient = builder.build();
 
         successHandler = new GithubOAuthSuccessHandler(
-                restClient, authorizedClientService, authService, cookieUtil
+                restClient, authorizedClientService, authService, cookieUtil, appProperties
         );
     }
 
