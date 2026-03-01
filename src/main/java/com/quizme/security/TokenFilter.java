@@ -41,7 +41,8 @@ public class TokenFilter extends OncePerRequestFilter {
     public void doFilterInternal(@NonNull HttpServletRequest request,
                                  @NonNull HttpServletResponse response,
                                  @NonNull FilterChain chain) throws IOException, ServletException {
-        var accessTokenOpt = cookieUtil.getCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME);
+        var accessTokenOpt = cookieUtil.getCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)
+                .filter(jwtUtil::isValid);
         accessTokenOpt.ifPresent(s -> setUserAsAuthenticated(request, s));
         chain.doFilter(request, response);
     }

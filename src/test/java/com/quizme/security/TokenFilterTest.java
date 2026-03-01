@@ -44,6 +44,7 @@ class TokenFilterTest {
     void testChainNextIsInvokedWhenAuthenticated() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of(""));
         when(jwtUtil.getUsername(any())).thenReturn("email");
+        when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername(any())).thenReturn(mock(UserDetails.class));
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
@@ -60,8 +61,19 @@ class TokenFilterTest {
     }
 
     @Test
+    void testChainNextIsInvokedWhenInvalidCookie() throws ServletException, IOException {
+        when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of(""));
+        when(jwtUtil.isValid(any())).thenReturn(false);
+
+        tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
+
+        verify(mockChain).doFilter(mockRequest, mockResponse);
+    }
+
+    @Test
     void testChainNextIsInvokedWhenUserDoesntExist() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of(""));
+        when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername(any())).thenThrow(UsernameNotFoundException.class);
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
@@ -73,6 +85,7 @@ class TokenFilterTest {
     void testAccessTokenExtractedFromCookie() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
         when(userDetailsService.loadUserByUsername(any())).thenReturn(mock(UserDetails.class));
+        when(jwtUtil.isValid(any())).thenReturn(true);
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
 
@@ -83,6 +96,7 @@ class TokenFilterTest {
     void testUserLoadedByName() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
         when(jwtUtil.getUsername("theToken")).thenReturn("theUser");
+        when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername("theUser")).thenReturn(mock(UserDetails.class));
 
         tokenFilter.doFilterInternal(mockRequest, mockResponse, mockChain);
@@ -97,6 +111,7 @@ class TokenFilterTest {
     void testSecurityContextHoldsAuthenticatedUser() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
         when(jwtUtil.getUsername("theToken")).thenReturn("theUser");
+        when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername("theUser")).thenReturn(
                 User.builder()
                         .username("theUser").build()

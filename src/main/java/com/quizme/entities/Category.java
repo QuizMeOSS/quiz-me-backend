@@ -1,6 +1,8 @@
 package com.quizme.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
@@ -13,11 +15,26 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false)
-    private User userId;
+    private User user;
     @Column(nullable = false)
     private String name;
 
 
-    protected Category() {}
+    protected Category() {
+    }
+
+    public Category(User user, String name) {
+        this.user = user;
+        this.name = name;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
 }
