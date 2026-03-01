@@ -7,8 +7,12 @@ import com.quizme.services.CategoryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CategoryControllerIntegrationTest extends IntegrationTest {
     @Autowired
@@ -19,6 +23,8 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
     void resetDatabase() {
         super.resetDatabase();
         jdbcTemplate.execute("DELETE FROM categories");
+        // reset id sequence
+        jdbcTemplate.execute("ALTER TABLE categories ALTER COLUMN id RESTART WITH 1");
     }
 
     @Test
@@ -38,7 +44,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void register_returnsHttp409_whenCategoryWithSameNameExists() {
+    void createCategory_returnsHttp409_whenCategoryWithSameNameExists() {
         // simulate existing category
         var requestDto = new NewCategoryDto("new");
         categoryService.createCategory(requestDto, user);
@@ -54,6 +60,30 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
                     assertEquals("ALREADY_EXISTS", error.getResponseBody().error());
                     assertEquals("Category with same name already exists", error.getResponseBody().message());
                     assertEquals("/categories", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void getCategories() {
+        var requestDto = new NewCategoryDto("Algorithms");
+        var requestDto2 = new NewCategoryDto("OS");
+        var requestDto3 = new NewCategoryDto("Databases");
+        categoryService.createCategory(requestDto, user);
+        categoryService.createCategory(requestDto2, user);
+        categoryService.createCategory(requestDto3, user);
+
+        restTestClient.get()
+                .uri("/categories")
+                .cookie("access_token", accessToken)
+                .exchange()
+                .expectBody(new ParameterizedTypeReference<List<CreatedCategoryDto>>() {
+                })
+                .consumeWith(result -> {
+                    assertTrue(result.getStatus().is2xxSuccessful());
+                    // no ORDER BY clause, so order isn't guarantee
+                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(1, requestDto.name())));
+                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(2, requestDto2.name())));
+                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(3, requestDto3.name())));
                 });
     }
 

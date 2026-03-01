@@ -15,7 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -80,5 +81,22 @@ class CategoryServiceTest {
         assertThrows(DataIntegrityViolationException.class, () -> {
             categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class));
         });
+    }
+
+    @Test
+    void getCategories_FetchesUserCategories() {
+        User user = new User("", "");
+        var categories = List.of(
+                new Category(user, "a"),
+                new Category(user, "b")
+        );
+        when(categoryRepo.findAllByUser(user)).thenReturn(
+                categories
+        );
+
+        var serviceResponse = categoryService.getCategories(user);
+
+        assertEquals("a", serviceResponse.toArray(CreatedCategoryDto[]::new)[0].name());
+        assertEquals("b", serviceResponse.toArray(CreatedCategoryDto[]::new)[1].name());
     }
 }

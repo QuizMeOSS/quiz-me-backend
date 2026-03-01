@@ -13,6 +13,8 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+
 @Service
 public class CategoryService {
 
@@ -29,7 +31,8 @@ public class CategoryService {
 
     }
 
-    private @NonNull Result<CreatedCategoryDto> saveCategoryOrReturnErrorIfExists(Category category) {
+    @NonNull
+    private Result<CreatedCategoryDto> saveCategoryOrReturnErrorIfExists(Category category) {
         try {
             // Q: why not check if name exists first, then store if it doesn't exist?
             // A: to avoid race conditions. Downside: postgres increments the primary key sequence
@@ -37,7 +40,7 @@ public class CategoryService {
             // a user tries inserting duplicate item. But that's probably ok due to
             // the high range of bigint
             categoryRepo.save(category);
-            return Result.success(new CreatedCategoryDto(category.getId(), category.getName()));
+            return Result.success(CreatedCategoryDto.fromEntity(category));
         } catch (DataIntegrityViolationException e) {
             if (e.getCause() instanceof ConstraintViolationException constraintViolationException
                     && constraintViolationException.getKind().equals(ConstraintViolationException.ConstraintKind.UNIQUE)) {
@@ -47,5 +50,13 @@ public class CategoryService {
             // unexpected exception, propagate it
             throw e;
         }
+    }
+
+    @NonNull
+    public Collection<CreatedCategoryDto> getCategories(User user) {
+        return categoryRepo.findAllByUser(user)
+                .stream()
+                .map(CreatedCategoryDto::fromEntity)
+                .toList();
     }
 }
