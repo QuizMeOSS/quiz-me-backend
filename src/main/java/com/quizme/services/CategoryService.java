@@ -63,12 +63,13 @@ public class CategoryService {
 
     /**
      * Get specific categories of a user by id.
+     *
      * @param user user to get their categories
-     * @param ids ids of the categories to look for
+     * @param ids  ids of the categories to look for
      * @return categories of a user, selected by id.
      */
     @NonNull
-    public Collection<Category> getCategoriesByIds(User user, Set<Long> ids){
+    public Collection<Category> getCategoriesByIdsForUser(User user, Set<Long> ids) {
         return StreamSupport.stream(categoryRepo.findAllById(ids).spliterator(), false)
                 .peek(category -> {
                     if (!category.getUser().getId().equals(user.getId())) {

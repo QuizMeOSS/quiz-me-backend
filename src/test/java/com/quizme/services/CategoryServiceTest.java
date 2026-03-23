@@ -16,12 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
@@ -97,5 +97,43 @@ class CategoryServiceTest {
 
         assertEquals("a", serviceResponse.toArray(Category[]::new)[0].getName());
         assertEquals("b", serviceResponse.toArray(Category[]::new)[1].getName());
+    }
+
+    @Test
+    void getCategoriesByIdsForUser_callsRepoFindAllByIdForUser() {
+        var ids = Set.of(1L, 3L);
+        categoryService.getCategoriesByIdsForUser(new User("e", "u"), ids);
+        verify(categoryRepo).findAllById(ids);
+    }
+
+    @Test
+    void getCategoriesByIdsForUser_returnsAllFoundCategoriesIfUserMatch() {
+        var user = new User("e", "u");
+        var expectedCat1 = new Category(user, "Cat1");
+        var expectedCat2 = new Category(user, "Cat2");
+        when(categoryRepo.findAllById(any())).thenReturn(
+                List.of(expectedCat1, expectedCat2)
+        );
+
+        var categories = categoryService.getCategoriesByIdsForUser(user, Set.of());
+
+        assertEquals(List.of(expectedCat1, expectedCat2), categories);
+    }
+
+    @Test
+    void getCategoriesByIdsForUser_throwsExceptionIfUserDoesntMatch() {
+        var user = new User("e", "u");
+        var expectedCat1 = new Category(user, "Cat1");
+        // this one should throw exception
+        var otherUser = mock(User.class);
+        when(otherUser.getId()).thenReturn(1L);
+        var expectedCat2 = new Category(otherUser, "Cat2");
+        when(categoryRepo.findAllById(any())).thenReturn(
+                List.of(expectedCat1, expectedCat2)
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.getCategoriesByIdsForUser(user, Set.of());
+        });
     }
 }
