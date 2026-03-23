@@ -80,30 +80,10 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void createQuestion_returnsHttp409_whenCategoryIdDoesntBelongToUser() {
-        // simulate category is for a different user
-        var otherUser = userRepo.save(new User("user2@email.com", "u2"));
-        categoryService.createCategory(new NewCategoryDto("new"), otherUser);
-
+    void createQuestion_returnsHttp409_whenNoCategoryProvided() {
         restTestClient.post()
                 .uri("/questions")
-                .body(new NewQuestionDto("Question", "a", Set.of(1L)))
-                .cookie("access_token", accessToken)
-                .exchange()
-                .expectBody(ApiError.class)
-                .consumeWith(error -> {
-                    assertEquals(400, error.getResponseBody().status());
-                    assertEquals("VALIDATION_FAILED", error.getResponseBody().error());
-                    assertEquals("Category 1 doesn't belong to user 1", error.getResponseBody().message());
-                    assertEquals("/questions", error.getResponseBody().path());
-                });
-    }
-
-    @Test
-    void createQuestion_returnsHttp409_whenCategoryDoesntExist() {
-        restTestClient.post()
-                .uri("/questions")
-                .body(new NewQuestionDto("Question", "a", Set.of(1L)))
+                .body(new NewQuestionDto("Question", "a", Set.of()))
                 .cookie("access_token", accessToken)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -116,9 +96,32 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void createQuestion_questionLinkedToCategories() {
+    void createQuestion_skipsNonExistentCategories() {
         categoryService.createCategory(new NewCategoryDto("Cat1"), user);
         categoryService.createCategory(new NewCategoryDto("Cat2"), user);
+        var requestDto = new NewQuestionDto("newQ", "newA", Set.of(1L, 2L, 3L)); // 3 doesn't exist
+
+        restTestClient.post()
+                .uri("/questions")
+                .body(requestDto)
+                .cookie("access_token", accessToken)
+                .exchange()
+                .expectBody(CreatedQuestionDto.class)
+                .consumeWith(question -> {
+                    assertEquals(1, question.getResponseBody().id());
+                    assertEquals("newQ", question.getResponseBody().question());
+                    assertEquals("newA", question.getResponseBody().answer());
+                    assertEquals(Set.of(1L, 2L), question.getResponseBody().categories()); // only categories 1,2 linked
+                    assertNotNull(question.getResponseBody().createdAt());
+                });
+    }
+
+    @Test
+    void createQuestion_skipsCategoriesBelongingToOtherUser() {
+        var otherUser = userRepo.save(new User("otherEmail", "otherName"));
+        categoryService.createCategory(new NewCategoryDto("Cat1"), user);
+        // should be skipped
+        categoryService.createCategory(new NewCategoryDto("Cat2"), otherUser);
         var requestDto = new NewQuestionDto("newQ", "newA", Set.of(1L, 2L));
 
         restTestClient.post()
@@ -131,7 +134,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());
                     assertEquals("newA", question.getResponseBody().answer());
-                    assertEquals(Set.of(1L, 2L), question.getResponseBody().categories()); // both categories exist
+                    assertEquals(Set.of(1L), question.getResponseBody().categories()); // category 2 skipped
                     assertNotNull(question.getResponseBody().createdAt());
                 });
     }

@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface CategoryRepo extends CrudRepository<Category, Long> {
     List<Category> findAllByUser(User user);
+    List<Category> findAllByUserAndIdIn(User user, Collection<Long> ids);
 }

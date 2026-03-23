@@ -70,13 +70,6 @@ public class CategoryService {
      */
     @NonNull
     public Collection<Category> getCategoriesByIdsForUser(User user, Set<Long> ids) {
-        return StreamSupport.stream(categoryRepo.findAllById(ids).spliterator(), false)
-                .peek(category -> {
-                    if (!category.getUser().getId().equals(user.getId())) {
-                        throw new IllegalArgumentException(String.format("Category %s doesn't belong to user %s",
-                                category.getId(), user.getId()));
-                    }
-                })
-                .toList();
+        return categoryRepo.findAllByUserAndIdIn(user, ids);
     }
 }

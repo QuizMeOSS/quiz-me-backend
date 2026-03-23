@@ -100,40 +100,16 @@ class CategoryServiceTest {
     }
 
     @Test
-    void getCategoriesByIdsForUser_callsRepoFindAllByIdForUser() {
-        var ids = Set.of(1L, 3L);
-        categoryService.getCategoriesByIdsForUser(new User("e", "u"), ids);
-        verify(categoryRepo).findAllById(ids);
-    }
-
-    @Test
-    void getCategoriesByIdsForUser_returnsAllFoundCategoriesIfUserMatch() {
+    void getCategoriesByIdsForUser_returnsAllFoundCategories() {
         var user = new User("e", "u");
         var expectedCat1 = new Category(user, "Cat1");
         var expectedCat2 = new Category(user, "Cat2");
-        when(categoryRepo.findAllById(any())).thenReturn(
+        when(categoryRepo.findAllByUserAndIdIn(any(), any())).thenReturn(
                 List.of(expectedCat1, expectedCat2)
         );
 
         var categories = categoryService.getCategoriesByIdsForUser(user, Set.of());
 
         assertEquals(List.of(expectedCat1, expectedCat2), categories);
-    }
-
-    @Test
-    void getCategoriesByIdsForUser_throwsExceptionIfUserDoesntMatch() {
-        var user = new User("e", "u");
-        var expectedCat1 = new Category(user, "Cat1");
-        // this one should throw exception
-        var otherUser = mock(User.class);
-        when(otherUser.getId()).thenReturn(1L);
-        var expectedCat2 = new Category(otherUser, "Cat2");
-        when(categoryRepo.findAllById(any())).thenReturn(
-                List.of(expectedCat1, expectedCat2)
-        );
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            categoryService.getCategoriesByIdsForUser(user, Set.of());
-        });
     }
 }
