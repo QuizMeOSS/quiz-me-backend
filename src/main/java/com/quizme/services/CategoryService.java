@@ -71,7 +71,7 @@ public class CategoryService {
     public Collection<Category> getCategoriesByIds(User user, Set<Long> ids){
         return StreamSupport.stream(categoryRepo.findAllById(ids).spliterator(), false)
                 .peek(category -> {
-                    if (!category.getUser().equals(user)) {
+                    if (!category.getUser().getId().equals(user.getId())) {
                         throw new IllegalArgumentException(String.format("Category %s doesn't belong to user %s",
                                 category.getId(), user.getId()));
                     }

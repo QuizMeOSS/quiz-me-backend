@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/categories")
 public class CategoryController {
 
-
     private final ResultToResponseEntityMapper responseMapper;
     private final CategoryService categoryService;
     private final UserRepo userRepo;
