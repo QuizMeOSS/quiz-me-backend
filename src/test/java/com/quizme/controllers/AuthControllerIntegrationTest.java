@@ -112,7 +112,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void login_returnsHttp404_whenNoAssociatedCredentials() {
-        userRepo.save(new User("email", "username"));
+        userRepo.save(new User("email", "userWithNoCred"));
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
 
         restTestClient.post()

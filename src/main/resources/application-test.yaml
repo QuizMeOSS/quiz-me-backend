@@ -1,15 +1,7 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
-  jpa:
-    hibernate:
-      ddl-auto: create-drop # don't run schema.sql on startup as it is postgres specific, instead let hibernate create the schema based on entities
   sql:
     init:
-      mode: never # related to above comment, don't run any sql scripts on startup
+      mode: always # run sql scripts on startup
 
   ssl:
     bundle:
