@@ -1,12 +1,18 @@
 package com.quizme.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
-@Table(name = "questions")
+@Table(
+        name = "questions",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "user_question", columnNames = {"userId", "question"})
+        })
 public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,7 +23,8 @@ public class Question {
     private String answer;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User userId;
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User user;
     @ManyToMany
     @JoinTable(
             name = "questions_categories",
@@ -26,7 +33,35 @@ public class Question {
     )
     private Set<Category> categories;
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    protected Question() {}
+    protected Question() {
+    }
+
+    public Question(User user, String question, String answer, Set<Category> categories) {
+        this.user = user;
+        this.question = question;
+        this.answer = answer;
+        this.categories = categories;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public String getAnswer() {
+        return answer;
+    }
+
+    public Set<Category> getCategories() {
+        return categories;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

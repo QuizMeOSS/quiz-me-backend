@@ -5,21 +5,15 @@ import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.entities.User;
-import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
 import com.quizme.services.AuthService;
 import com.quizme.services.result.FailureReason;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.nio.charset.StandardCharsets;
@@ -28,14 +22,9 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@AutoConfigureRestTestClient
-class AuthControllerIntegrationTest {
+class AuthControllerIntegrationTest extends IntegrationTest {
     @Autowired
     private RestTestClient restTestClient;
-    @Autowired
-    private ResultToResponseEntityMapper mapper;
     @Autowired
     private AuthService registrationService;
     @Autowired
@@ -44,16 +33,6 @@ class AuthControllerIntegrationTest {
     private UserRepo userRepo;
     @Autowired
     private JwtUtil jwtUtil;
-
-    // Clean up database after each test
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-
-    @AfterEach
-    void resetDatabase() {
-        jdbcTemplate.execute("DELETE FROM user_credentials");
-        jdbcTemplate.execute("DELETE FROM users");
-    }
 
     @Test
     void register_userReturned_whenUniqueUsernameAndEmail() {
@@ -133,7 +112,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void login_returnsHttp404_whenNoAssociatedCredentials() {
-        userRepo.save(new User("email", "username"));
+        userRepo.save(new User("email", "userWithNoCred"));
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
 
         restTestClient.post()

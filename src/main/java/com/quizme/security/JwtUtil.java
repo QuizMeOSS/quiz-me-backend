@@ -48,6 +48,10 @@ public class JwtUtil {
                 .getSubject();
     }
 
+    public boolean isValid(String token){
+        return !isExpired(token);
+    }
+
     public boolean isExpired(String token){
         try{
             getTokenClaims(token);

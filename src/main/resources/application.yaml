@@ -9,6 +9,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate # validate the created tables schema against the entities, app won't start if they don't match
+    properties:
+      hibernate:
+        dialect: com.quizme.config.CustomPostgreSQLDialect
 #  sql:
 #    init:
 #      mode: always # always run schema and data scripts on startup
