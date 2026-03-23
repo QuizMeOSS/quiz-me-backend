@@ -1,6 +1,5 @@
 package com.quizme.services;
 
-import com.quizme.dto.CreatedCategoryDto;
 import com.quizme.dto.NewCategoryDto;
 import com.quizme.entities.Category;
 import com.quizme.entities.User;
@@ -84,7 +83,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    void getCategories_FetchesUserCategories() {
+    void getAllCategories_FetchesAllUserCategories() {
         User user = new User("", "");
         var categories = List.of(
                 new Category(user, "a"),
@@ -94,9 +93,9 @@ class CategoryServiceTest {
                 categories
         );
 
-        var serviceResponse = categoryService.getCategories(user);
+        var serviceResponse = categoryService.getAllCategories(user);
 
-        assertEquals("a", serviceResponse.toArray(CreatedCategoryDto[]::new)[0].name());
-        assertEquals("b", serviceResponse.toArray(CreatedCategoryDto[]::new)[1].name());
+        assertEquals("a", serviceResponse.toArray(Category[]::new)[0].getName());
+        assertEquals("b", serviceResponse.toArray(Category[]::new)[1].getName());
     }
 }

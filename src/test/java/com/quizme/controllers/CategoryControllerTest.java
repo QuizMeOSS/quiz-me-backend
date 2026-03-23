@@ -2,6 +2,7 @@ package com.quizme.controllers;
 
 import com.quizme.dto.CreatedCategoryDto;
 import com.quizme.dto.NewCategoryDto;
+import com.quizme.entities.Category;
 import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
@@ -81,9 +82,9 @@ class CategoryControllerTest {
     @Test
     @WithMockUser(username = "user@email.com")
     void getCategories() {
-        List<CreatedCategoryDto> categories = List.of(new CreatedCategoryDto(1, "x"),
-                new CreatedCategoryDto(3, "y"));
-        when(categoryService.getCategories(any())).thenReturn(categories);
+        List<Category> categories = List.of(new Category(new User("", ""), "x"),
+                new Category(new User("", ""), "y"));
+        when(categoryService.getAllCategories(any())).thenReturn(categories);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.get()
@@ -94,8 +95,8 @@ class CategoryControllerTest {
                 .consumeWith(result -> {
                     assertTrue(result.getStatus().is2xxSuccessful());
                     // no ORDER BY clause, so order isn't guarantee
-                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(1, "x")));
-                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(3, "y")));
+                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(0, "x"))); // ids are set by db, so we always get id = 0 from User constructor
+                    assertTrue(result.getResponseBody().contains(new CreatedCategoryDto(0, "y")));
                 });
     }
 

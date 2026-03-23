@@ -14,6 +14,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.stream.StreamSupport;
 
 @Service
 public class CategoryService {
@@ -53,10 +55,27 @@ public class CategoryService {
     }
 
     @NonNull
-    public Collection<CreatedCategoryDto> getCategories(User user) {
+    public Collection<Category> getAllCategories(User user) {
         return categoryRepo.findAllByUser(user)
                 .stream()
-                .map(CreatedCategoryDto::fromEntity)
+                .toList();
+    }
+
+    /**
+     * Get specific categories of a user by id.
+     * @param user user to get their categories
+     * @param ids ids of the categories to look for
+     * @return categories of a user, selected by id.
+     */
+    @NonNull
+    public Collection<Category> getCategoriesByIds(User user, Set<Long> ids){
+        return StreamSupport.stream(categoryRepo.findAllById(ids).spliterator(), false)
+                .peek(category -> {
+                    if (!category.getUser().equals(user)) {
+                        throw new IllegalArgumentException(String.format("Category %s doesn't belong to user %s",
+                                category.getId(), user.getId()));
+                    }
+                })
                 .toList();
     }
 }

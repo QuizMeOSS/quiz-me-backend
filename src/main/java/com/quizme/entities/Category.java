@@ -37,4 +37,8 @@ public class Category {
     public String getName() {
         return name;
     }
+
+    public User getUser() {
+        return user;
+    }
 }
