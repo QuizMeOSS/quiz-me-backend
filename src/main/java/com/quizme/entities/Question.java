@@ -1,6 +1,8 @@
 package com.quizme.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -21,6 +23,7 @@ public class Question {
     private String answer;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
     @ManyToMany
     @JoinTable(
@@ -30,11 +33,12 @@ public class Question {
     )
     private Set<Category> categories;
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    protected Question() {}
+    protected Question() {
+    }
 
-    public Question(User user, String question, String answer, Set<Category> categories){
+    public Question(User user, String question, String answer, Set<Category> categories) {
         this.user = user;
         this.question = question;
         this.answer = answer;
