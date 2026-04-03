@@ -1,31 +1,23 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.ApiError;
-import com.quizme.dto.CreatedQuestionDto;
-import com.quizme.dto.NewCategoryDto;
-import com.quizme.dto.NewQuestionDto;
+import com.quizme.dto.*;
 import com.quizme.entities.User;
 import com.quizme.services.CategoryService;
 import com.quizme.services.QuestionService;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class QuestionControllerIntegrationTest extends IntegrationTest {
     @Autowired
     private QuestionService questionService;
     @Autowired
     private CategoryService categoryService;
+    private final QuestionChoiceDto choice = new QuestionChoiceDto("c1", true);
 
     @AfterEach
     @Override
@@ -42,7 +34,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuestion_questionReturned_whenUniqueQuestion() {
         categoryService.createCategory(new NewCategoryDto("new"), user);
-        var requestDto = new NewQuestionDto("newQ", "newA", Set.of(1L));
+        var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L));
 
         restTestClient.post()
                 .uri("/questions")
@@ -53,7 +45,8 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .consumeWith(question -> {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());
-                    assertEquals("newA", question.getResponseBody().answer());
+                    assertEquals("c1", question.getResponseBody().choices().iterator().next().choice());
+                    assertTrue(question.getResponseBody().choices().iterator().next().isCorrect());
                     assertEquals(Set.of(1L), question.getResponseBody().categories());
                     assertNotNull(question.getResponseBody().createdAt());
                 });
@@ -63,11 +56,11 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     void createQuestion_returnsHttp409_whenQuestionExists_caseInsensitive() {
         // simulate existing category and question
         categoryService.createCategory(new NewCategoryDto("new"), user);
-        questionService.createQuestion(new NewQuestionDto("duplicate question", "a", Set.of(1L)), user);
+        questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user);
 
         restTestClient.post()
                 .uri("/questions")
-                .body(new NewQuestionDto("Duplicate Question", "a2", Set.of(1L)))
+                .body(new NewQuestionDto("Duplicate Question", Set.of(choice), Set.of(1L)))
                 .cookie("access_token", accessToken)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -83,7 +76,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     void createQuestion_returnsHttp409_whenNoCategoryProvided() {
         restTestClient.post()
                 .uri("/questions")
-                .body(new NewQuestionDto("Question", "a", Set.of()))
+                .body(new NewQuestionDto("Question", Set.of(choice), Set.of()))
                 .cookie("access_token", accessToken)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -99,7 +92,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     void createQuestion_skipsNonExistentCategories() {
         categoryService.createCategory(new NewCategoryDto("Cat1"), user);
         categoryService.createCategory(new NewCategoryDto("Cat2"), user);
-        var requestDto = new NewQuestionDto("newQ", "newA", Set.of(1L, 2L, 3L)); // 3 doesn't exist
+        var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L, 3L)); // 3 doesn't exist
 
         restTestClient.post()
                 .uri("/questions")
@@ -110,7 +103,8 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .consumeWith(question -> {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());
-                    assertEquals("newA", question.getResponseBody().answer());
+                    assertEquals("c1", question.getResponseBody().choices().iterator().next().choice());
+                    assertTrue(question.getResponseBody().choices().iterator().next().isCorrect());
                     assertEquals(Set.of(1L, 2L), question.getResponseBody().categories()); // only categories 1,2 linked
                     assertNotNull(question.getResponseBody().createdAt());
                 });
@@ -122,7 +116,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
         categoryService.createCategory(new NewCategoryDto("Cat1"), user);
         // should be skipped
         categoryService.createCategory(new NewCategoryDto("Cat2"), otherUser);
-        var requestDto = new NewQuestionDto("newQ", "newA", Set.of(1L, 2L));
+        var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L));
 
         restTestClient.post()
                 .uri("/questions")
@@ -133,7 +127,8 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .consumeWith(question -> {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());
-                    assertEquals("newA", question.getResponseBody().answer());
+                    assertEquals("c1", question.getResponseBody().choices().iterator().next().choice());
+                    assertTrue(question.getResponseBody().choices().iterator().next().isCorrect());
                     assertEquals(Set.of(1L), question.getResponseBody().categories()); // category 2 skipped
                     assertNotNull(question.getResponseBody().createdAt());
                 });

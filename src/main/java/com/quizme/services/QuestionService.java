@@ -1,19 +1,24 @@
 package com.quizme.services;
 
 import com.quizme.dto.NewQuestionDto;
+import com.quizme.dto.QuestionChoiceDto;
 import com.quizme.entities.Category;
 import com.quizme.entities.Question;
+import com.quizme.entities.QuestionChoice;
 import com.quizme.entities.User;
+import com.quizme.repos.QuestionChoiceRepo;
 import com.quizme.repos.QuestionRepo;
 import com.quizme.services.result.Failure;
 import com.quizme.services.result.FailureReason;
 import com.quizme.services.result.Result;
+import jakarta.transaction.Transactional;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -21,37 +26,42 @@ public class QuestionService {
 
     private final QuestionRepo questionRepo;
     private final CategoryService categoryService;
+    private final QuestionChoiceRepo questionChoiceRepo;
 
     public QuestionService(QuestionRepo questionRepo,
-                           CategoryService categoryService) {
+                           CategoryService categoryService,
+                           QuestionChoiceRepo questionChoiceRepo) {
         this.questionRepo = questionRepo;
         this.categoryService = categoryService;
+        this.questionChoiceRepo = questionChoiceRepo;
     }
 
     public Result<Question> createQuestion(NewQuestionDto requestDto,
-                                                     User user) {
-        if(requestDto.question().isEmpty()){
+                                           User user) {
+        if (requestDto.question().isEmpty()) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Question can't be empty"));
         }
-        if(requestDto.answer().isEmpty()){
+        if (requestDto.choices().stream().noneMatch(QuestionChoiceDto::isCorrect)) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Please provide an answer to the question"));
         }
         Set<Category> categories;
         try {
             categories = new HashSet<>(categoryService.getCategoriesByIdsForUser(user, requestDto.categories()));
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, e.getMessage()));
         }
-        if(categories.isEmpty()){
+        if (categories.isEmpty()) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Question must belong to at least one category"));
         }
-        var question = new Question(user, requestDto.question(), requestDto.answer(), categories);
-        return saveQuestionOrReturnErrorIfExists(question);
+
+        var question = new Question(user, requestDto.question(), categories);
+        return saveQuestionOrReturnErrorIfExists(question, requestDto.choices());
 
     }
 
+    @Transactional
     @NonNull
-    private Result<Question> saveQuestionOrReturnErrorIfExists(Question question) {
+    private Result<Question> saveQuestionOrReturnErrorIfExists(Question question, Set<QuestionChoiceDto> choicesDto) {
         try {
             // Q: why not check if question exists first, then store if it doesn't exist?
             // A: to avoid race conditions. Downside: postgres increments the primary key sequence
@@ -59,6 +69,9 @@ public class QuestionService {
             // a user tries inserting duplicate item. But that's probably ok due to
             // the high range of bigint
             question = questionRepo.save(question);
+            var savedChoices = saveQuestionChoices(question, choicesDto);
+            question.setChoices(new HashSet<>(savedChoices));
+
             return Result.success(question);
         } catch (DataIntegrityViolationException e) {
             if (e.getCause() instanceof ConstraintViolationException constraintViolationException
@@ -69,5 +82,15 @@ public class QuestionService {
             // unexpected exception, propagate it
             throw e;
         }
+    }
+
+    @NonNull
+    private List<QuestionChoice> saveQuestionChoices(Question question, Set<QuestionChoiceDto> choicesDto) {
+        Set<QuestionChoice> choices = new HashSet<>();
+        short choiceId = 1;
+        for (QuestionChoiceDto choiceDto : choicesDto) {
+            choices.add(new QuestionChoice(question.getId(), choiceId++, choiceDto.choice(), choiceDto.isCorrect()));
+        }
+        return questionChoiceRepo.saveAll(choices);
     }
 }

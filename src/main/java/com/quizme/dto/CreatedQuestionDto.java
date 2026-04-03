@@ -10,12 +10,13 @@ import java.util.stream.Collectors;
 public record CreatedQuestionDto(
         long id,
         String question,
-        String answer,
+        Set<QuestionChoiceDto> choices,
         Set<Long> categories,
         LocalDateTime createdAt
 ) {
-    public static CreatedQuestionDto fromEntity(Question question){
-        return new CreatedQuestionDto(question.getId(), question.getQuestion(), question.getAnswer(),
+    public static CreatedQuestionDto fromEntity(Question question) {
+        return new CreatedQuestionDto(question.getId(), question.getQuestion(),
+                QuestionChoiceDto.fromEntities(question.getChoices()),
                 question.getCategories().stream().map(Category::getId).collect(Collectors.toSet()),
                 question.getCreatedAt());
     }
