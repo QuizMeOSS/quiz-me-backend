@@ -51,19 +51,19 @@ class QuestionControllerTest {
     void createQuestion_happyScenario() {
         var user = new User("e", "u");
         Result<Question> result = Result.success(new Question(user,
-                "q", "a", Set.of(new Category(user, "c1"))));
+                "q",
+                Set.of(new Category(user, "c1"))));
         when(questionService.createQuestion(any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
                 .uri("/questions")
-                .body(new NewQuestionDto("", "", Set.of()))
+                .body(new NewQuestionDto("", Set.of(), Set.of()))
                 .exchange()
                 .expectBody(CreatedQuestionDto.class)
                 .consumeWith(question -> {
                     assertEquals(0, question.getResponseBody().id()); // id is set by database, so here we get 0
                     assertEquals("q", question.getResponseBody().question());
-                    assertEquals("a", question.getResponseBody().answer());
                     assertEquals(Set.of(0L), question.getResponseBody().categories()); // id is set by database, so here we get 0
                     assertNotNull(question.getResponseBody().createdAt());
                 });
