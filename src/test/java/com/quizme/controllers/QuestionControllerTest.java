@@ -1,8 +1,7 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.QuestionDto;
-import com.quizme.dto.NewCategoryDto;
 import com.quizme.dto.NewQuestionDto;
+import com.quizme.dto.QuestionDto;
 import com.quizme.entities.Category;
 import com.quizme.entities.Question;
 import com.quizme.entities.User;
@@ -78,7 +77,7 @@ class QuestionControllerTest {
 
         restTestClient.post()
                 .uri("/questions")
-                .body(new NewCategoryDto(""))
+                .body(new NewQuestionDto("", Set.of(), Set.of()))
                 .exchange();
 
         // verify the mapper was invoked to map the response to ApiError
