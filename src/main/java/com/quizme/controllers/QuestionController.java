@@ -1,6 +1,6 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.CreatedQuestionDto;
+import com.quizme.dto.QuestionDto;
 import com.quizme.dto.NewQuestionDto;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
@@ -47,6 +47,6 @@ public class QuestionController {
             return responseMapper.map(result, request.getRequestURI());
         }
 
-        return ResponseEntity.ok(CreatedQuestionDto.fromEntity(result.success()));
+        return ResponseEntity.ok(QuestionDto.fromEntity(result.success()));
     }
 }

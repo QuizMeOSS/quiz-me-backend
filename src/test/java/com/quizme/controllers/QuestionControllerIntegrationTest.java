@@ -41,7 +41,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .exchange()
-                .expectBody(CreatedQuestionDto.class)
+                .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());
@@ -99,7 +99,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .exchange()
-                .expectBody(CreatedQuestionDto.class)
+                .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());
@@ -123,7 +123,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .exchange()
-                .expectBody(CreatedQuestionDto.class)
+                .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
                     assertEquals(1, question.getResponseBody().id());
                     assertEquals("newQ", question.getResponseBody().question());

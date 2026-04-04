@@ -1,6 +1,6 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.CreatedQuestionDto;
+import com.quizme.dto.QuestionDto;
 import com.quizme.dto.NewCategoryDto;
 import com.quizme.dto.NewQuestionDto;
 import com.quizme.entities.Category;
@@ -60,7 +60,7 @@ class QuestionControllerTest {
                 .uri("/questions")
                 .body(new NewQuestionDto("", Set.of(), Set.of()))
                 .exchange()
-                .expectBody(CreatedQuestionDto.class)
+                .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
                     assertEquals(0, question.getResponseBody().id()); // id is set by database, so here we get 0
                     assertEquals("q", question.getResponseBody().question());
