@@ -75,6 +75,7 @@ class QuizServiceTest {
         var q2 = new Question(user, "question2", Collections.emptySet());
         var q3 = new Question(user, "question3", Collections.emptySet());
         var q4 = new Question(user, "question4", Collections.emptySet());
+        when(quizRepo.save(any())).thenAnswer(i -> i.getArguments()[0]);
         when(questionRepo.findAllByUser(any())).thenReturn(
                 List.of(q1, q2, q3, q4)
         );
@@ -95,7 +96,8 @@ class QuizServiceTest {
         for (QuestionDto q : result.success().questions()) {
             assertTrue(q.equals(QuestionDto.fromEntity(q1))
                     || q.equals(QuestionDto.fromEntity(q2))
-                    || q.equals(QuestionDto.fromEntity(q3)));
+                    || q.equals(QuestionDto.fromEntity(q3))
+                    || q.equals(QuestionDto.fromEntity(q4)));
         }
     }
 
