@@ -88,7 +88,7 @@ CREATE TABLE quizzes_attempts (
     quiz_id BIGINT,
     question_id BIGINT,
     answer_id SMALLINT NOT NULL,
-	PRIMARY KEY (quiz_id, question_id, answer_id),
+	PRIMARY KEY (quiz_id, question_id),
     CONSTRAINT fk_qa_choice FOREIGN KEY (quiz_id, question_id, answer_id)
         REFERENCES quizzes_choices(quiz_id, question_id, choice_id)
 );
