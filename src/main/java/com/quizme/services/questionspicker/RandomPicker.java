@@ -11,12 +11,19 @@ public class RandomPicker implements QuestionsPicker {
 
     private final QuestionRepo questionRepo;
     private final User user;
+    private final Random random;
 
     public RandomPicker(
             @NonNull QuestionsPickerContext context
     ) {
+        this(context, new Random());
+    }
+
+    RandomPicker(@NonNull QuestionsPickerContext context,
+                 Random random){
         this.user = context.user();
         this.questionRepo = context.questionRepo();
+        this.random = random;
         if(user == null || questionRepo == null){
             throw new IllegalArgumentException("question picker missing context");
         }
@@ -40,7 +47,7 @@ public class RandomPicker implements QuestionsPicker {
         // 1. preserve original list
         // 2. avoid error in case original list is immutable
         list = new ArrayList<>(list);
-        Collections.shuffle(list);
+        Collections.shuffle(list, random);
         Set<E> result = new HashSet<>();
         for (int i = 0; i < n; i++) {
             result.add(list.get(i));
