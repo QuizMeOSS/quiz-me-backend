@@ -1,10 +1,9 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.QuestionDto;
-import com.quizme.dto.NewQuestionDto;
+import com.quizme.dto.NewQuizDto;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
-import com.quizme.services.QuestionService;
+import com.quizme.services.QuizService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,38 +14,35 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/questions")
-public class QuestionController {
+@RequestMapping("/quiz")
+public class QuizController {
 
-    private final ResultToResponseEntityMapper responseMapper;
-    private final QuestionService questionService;
     private final UserRepo userRepo;
+    private final QuizService quizService;
+    private final ResultToResponseEntityMapper responseMapper;
 
-    public QuestionController(
-            ResultToResponseEntityMapper responseMapper,
-            QuestionService questionService,
-            UserRepo userRepo
+    public QuizController(
+            UserRepo userRepo,
+            QuizService quizService,
+            ResultToResponseEntityMapper responseMapper
     ) {
-        this.responseMapper = responseMapper;
-        this.questionService = questionService;
         this.userRepo = userRepo;
+        this.quizService = quizService;
+        this.responseMapper = responseMapper;
     }
 
-    @PostMapping
-    public ResponseEntity<?> newQuestion(
-            @RequestBody NewQuestionDto requestDto,
+    @PostMapping("/new")
+    public ResponseEntity<?> createQuiz(
+            @RequestBody NewQuizDto requestDto,
             @AuthenticationPrincipal UserDetails authUser,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         var user = userRepo.findByEmail(authUser.getUsername())
                 .get(); // since we were able to authenticate user, then they exist
 
-        var result = questionService.createQuestion(requestDto, user);
-
+        var result = quizService.createQuiz(requestDto, user);
         if (result.failure() != null) {
             return responseMapper.map(result, request.getRequestURI());
         }
-
-        return ResponseEntity.ok(QuestionDto.fromEntity(result.success()));
+        return ResponseEntity.ok(result.success());
     }
 }

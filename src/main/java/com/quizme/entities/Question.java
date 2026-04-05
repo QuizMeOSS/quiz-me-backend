@@ -25,7 +25,7 @@ public class Question {
     @JoinColumn(name = "user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER) // will probably always need categories
     @JoinTable(
             name = "questions_categories",
             joinColumns = @JoinColumn(name = "question_id"),
