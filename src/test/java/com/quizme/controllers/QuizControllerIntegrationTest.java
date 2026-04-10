@@ -5,7 +5,6 @@ import com.quizme.entities.Quiz;
 import com.quizme.repos.QuizRepo;
 import com.quizme.services.CategoryService;
 import com.quizme.services.QuestionService;
-import com.quizme.services.QuizService;
 import com.quizme.services.questionspicker.QuestionsPicker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
     @Autowired
     private QuizRepo quizRepo;
 
-    private final QuestionChoiceDto choice = new QuestionChoiceDto("c1", true);
+    private final QuestionChoiceDto choice = new QuestionChoiceDto(1, "c1", true);
 
     @AfterEach
     @Override
