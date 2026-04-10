@@ -17,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,24 +43,29 @@ class QuestionServiceTest {
     @Mock
     private QuestionChoiceRepo questionChoiceRepo;
 
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     @InjectMocks
     private QuestionService questionService;
 
     // default choice
-    private final QuestionChoiceDto choice = new QuestionChoiceDto("c", true);
+    private final QuestionChoiceDto choice = new QuestionChoiceDto(1, "c", true);
 
     /**
      * User can't have duplicate questions (case-insensitive).
      */
     @Test
     void createQuestion_returnsFailure_whenQuestionExists() {
-        when(questionRepo.save(any())).thenThrow(
-                new DataIntegrityViolationException("",
-                        new ConstraintViolationException("", null, ConstraintViolationException.ConstraintKind.UNIQUE, ""))
-        );
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(new Category(new User("email", "username"), "C1")));
-
+        when(transactionTemplate.execute(any()))
+                .thenThrow(new DataIntegrityViolationException("dup", new ConstraintViolationException(
+                        "duplicate",
+                        null,
+                        ConstraintViolationException.ConstraintKind.UNIQUE,
+                        "question_unique_constraint"
+                )));
         var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class));
 
         assertEquals(Result.failure(new Failure(FailureReason.ALREADY_EXISTS,
@@ -70,6 +77,11 @@ class QuestionServiceTest {
         when(questionRepo.save(any())).thenAnswer(i -> i.getArguments()[0]);
         when(questionChoiceRepo.saveAll(any()))
                 .thenAnswer(i -> new ArrayList<>((Set) i.getArguments()[0]));
+        when(transactionTemplate.execute(any()))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<?> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(null);
+                });
         var user = new User("email", "username");
         var category = new Category(user, "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
@@ -89,12 +101,17 @@ class QuestionServiceTest {
         when(questionRepo.save(any())).thenAnswer(i -> i.getArguments()[0]);
         when(questionChoiceRepo.saveAll(any()))
                 .thenAnswer(i -> new ArrayList<>((Set) i.getArguments()[0]));
+        when(transactionTemplate.execute(any()))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<?> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(null);
+                });
         var user = new User("email", "username");
         var category = new Category(user, "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
 
-        var choice2 = new QuestionChoiceDto("choice2", false);
+        var choice2 = new QuestionChoiceDto(2, "choice2", false);
         var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice, choice2), Set.of()), user);
 
         assertEquals("q", result.success().getQuestion());
@@ -114,11 +131,10 @@ class QuestionServiceTest {
         var category = new Category(user, "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
-        when(questionRepo.save(any())).thenThrow(
-                new DataIntegrityViolationException("",
+        when(transactionTemplate.execute(any()))
+                .thenThrow(new DataIntegrityViolationException("",
                         // not the expected unique constraint violation
-                        new ConstraintViolationException("", null, ConstraintViolationException.ConstraintKind.NOT_NULL, ""))
-        );
+                        new ConstraintViolationException("", null, ConstraintViolationException.ConstraintKind.NOT_NULL, "")));
 
         assertThrows(DataIntegrityViolationException.class, () ->
                 questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class))
@@ -131,11 +147,8 @@ class QuestionServiceTest {
         var category = new Category(user, "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
-        when(questionRepo.save(any())).thenThrow(
-                new DataIntegrityViolationException("",
-                        // not the expected unique constraint violation
-                        new RuntimeException(""))
-        );
+        when(transactionTemplate.execute(any()))
+                .thenThrow(new DataIntegrityViolationException(""));
 
         assertThrows(DataIntegrityViolationException.class, () ->
                 questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class))
