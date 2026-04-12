@@ -6,6 +6,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -20,16 +21,11 @@ public class Quiz {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "quizzes_questions",
-            joinColumns = @JoinColumn(name = "quiz_id"),
-            inverseJoinColumns = @JoinColumn(name = "question_id")
-    )
-    private Set<Question> questions;
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<QuizQuestion> questions;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
@@ -57,11 +53,28 @@ public class Quiz {
         this.submittedAt = submittedAt;
     }
 
-    public Collection<Question> getQuestions() {
+    public Collection<QuizQuestion> getQuestions() {
         return questions;
     }
 
-    public void setQuestions(Set<Question> questions) {
+    public void setQuestions(Set<QuizQuestion> questions) {
         this.questions = questions;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, user, createdAt, submittedAt);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Quiz that = (Quiz) obj;
+        // skips `questions` because questions refers to quiz so we would have recursion.
+        return id == that.id && user.equals(that.user) && createdAt.equals(that.createdAt)
+                && Objects.equals(
+                        submittedAt, that.submittedAt
+        );
     }
 }

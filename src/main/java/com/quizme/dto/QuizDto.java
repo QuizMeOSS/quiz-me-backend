@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 
 public record QuizDto(
         long id,
-        Set<QuestionDto> questions,
+        Set<QuizQuestionDto> questions,
         LocalDateTime createdAt
 ) {
     public static QuizDto fromEntity(Quiz quiz) {
         return new QuizDto(quiz.getId(),
                 quiz.getQuestions()
-                        .stream().map(QuestionDto::fromEntity)
+                        .stream().map(QuizQuestionDto::fromEntity)
                         .collect(Collectors.toSet()),
                 quiz.getCreatedAt());
     }

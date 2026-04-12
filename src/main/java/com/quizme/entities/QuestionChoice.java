@@ -7,7 +7,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "questions_choices")
-public class QuestionChoice {
+public class QuestionChoice implements Choice {
     @EmbeddedId
     private QuestionChoiceId id;
 

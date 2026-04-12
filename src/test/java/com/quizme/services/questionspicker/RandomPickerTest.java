@@ -38,7 +38,7 @@ class RandomPickerTest {
 
     @Test
     void pick_THROWS_InsufficientQuestionsEx_WHEN_insufficientQuestions() {
-        when(repo.findAllByUser(user)).thenReturn(List.of(mock(Question.class)));
+        when(repo.findAllWithChoicesByUser(user)).thenReturn(List.of(mock(Question.class)));
 
         // only 1 question available but 2 requested -> insufficient
         assertThrows(InsufficientQuestionsException.class, () -> picker.pick(2));
@@ -46,7 +46,7 @@ class RandomPickerTest {
 
     @Test
     void pick_RETURNS_requestedNumberOfUniqueQuestions_WHEN_sufficientQuestions() {
-        when(repo.findAllByUser(user)).thenReturn(List.of(q1, q2, q3));
+        when(repo.findAllWithChoicesByUser(user)).thenReturn(List.of(q1, q2, q3));
 
         Set<Question> picked = picker.pick(2);
 
@@ -55,7 +55,7 @@ class RandomPickerTest {
 
     @Test
     void pick_RETURNS_all_WHEN_requestedCountEqualsAvailableQuestionsCount() {
-        when(repo.findAllByUser(user)).thenReturn(List.of(q1, q2, q3));
+        when(repo.findAllWithChoicesByUser(user)).thenReturn(List.of(q1, q2, q3));
 
         Set<Question> picked = picker.pick(3);
 
@@ -68,7 +68,7 @@ class RandomPickerTest {
     void pick_RETURNS_randomQuestions_WHEN_requestedCountLessThanAvailableQuestionsCount(
             int seed, Set<Question> expected
     ) {
-        when(repo.findAllByUser(user)).thenReturn(List.of(q1, q2, q3, q4, q5));
+        when(repo.findAllWithChoicesByUser(user)).thenReturn(List.of(q1, q2, q3, q4, q5));
         picker = new RandomPicker(new QuestionsPickerContext(user, repo), new Random(seed));
 
         Set<Question> picked = picker.pick(3);

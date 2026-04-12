@@ -17,7 +17,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     private QuestionService questionService;
     @Autowired
     private CategoryService categoryService;
-    private final QuestionChoiceDto choice = new QuestionChoiceDto("c1", true);
+    private final QuestionChoiceDto choice = new QuestionChoiceDto(1, "c1", true);
 
     @AfterEach
     @Override
