@@ -25,7 +25,7 @@ public class Quiz {
     private Set<QuizQuestion> questions;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
@@ -71,9 +71,10 @@ public class Quiz {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Quiz that = (Quiz) obj;
+        // skips `questions` because questions refers to quiz so we would have recursion.
         return id == that.id && user.equals(that.user) && createdAt.equals(that.createdAt)
-                && (submittedAt != null && submittedAt.equals(that.submittedAt)
-                    // in case submittedAt is null
-                    || submittedAt == that.submittedAt);
+                && Objects.equals(
+                        submittedAt, that.submittedAt
+        );
     }
 }

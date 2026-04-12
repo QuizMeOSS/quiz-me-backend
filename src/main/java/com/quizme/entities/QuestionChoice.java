@@ -30,11 +30,6 @@ public class QuestionChoice implements Choice {
         return id;
     }
 
-    @Override
-    public int getChoiceId() {
-        return id.getChoiceId();
-    }
-
     public String getChoice() {
         return choice;
     }

@@ -1,6 +1,9 @@
 package com.quizme.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 import java.util.Objects;
 
@@ -9,13 +12,6 @@ import java.util.Objects;
 public class QuizChoice implements Choice {
     @EmbeddedId
     private QuizQuestionChoiceId id;
-
-    @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name = "quiz_id", referencedColumnName = "quiz_id", insertable = false, updatable = false),
-            @JoinColumn(name = "question_id", referencedColumnName = "question_id", insertable = false, updatable = false)
-    })
-    QuizQuestion quizQuestion;
 
     @Column(name = "choice", nullable = false)
     private String choice;
@@ -26,9 +22,8 @@ public class QuizChoice implements Choice {
     protected QuizChoice() {
     }
 
-    public QuizChoice(long quizId, QuizQuestion question, short choiceId, String choice, boolean isCorrect) {
-        this.id = new QuizQuestionChoiceId(quizId, question.getId().getQuestionId(), choiceId);
-        this.quizQuestion = question;
+    public QuizChoice(long quizId, long questionId, short choiceId, String choice, boolean isCorrect) {
+        this.id = new QuizQuestionChoiceId(quizId, questionId, choiceId);
         this.choice = choice;
         this.isCorrect = isCorrect;
     }
@@ -43,11 +38,6 @@ public class QuizChoice implements Choice {
 
     public boolean isCorrect() {
         return isCorrect;
-    }
-
-    @Override
-    public int getChoiceId() {
-        return id.getChoiceId();
     }
 
     @Override

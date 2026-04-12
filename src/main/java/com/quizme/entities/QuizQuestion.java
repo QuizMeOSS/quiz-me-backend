@@ -10,20 +10,24 @@ import java.util.Set;
 @Table(name = "quizzes_questions")
 public class QuizQuestion {
     @EmbeddedId
-    QuizQuestionId id;
+    private QuizQuestionId id;
 
     @ManyToOne
     @MapsId("quizId")
     @JoinColumn(name = "quiz_id")
-    Quiz quiz;
+    private Quiz quiz;
 
     @ManyToOne
     @MapsId("questionId")
     @JoinColumn(name = "question_id")
-    Question question;
+    private Question question;
 
-    @OneToMany(mappedBy = "quizQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<QuizChoice> choices;
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumns({
+            @JoinColumn(name = "quiz_id",     referencedColumnName = "quiz_id"),
+            @JoinColumn(name = "question_id", referencedColumnName = "question_id")
+    })
+    private Set<QuizChoice> choices;
 
     protected QuizQuestion() {
     }

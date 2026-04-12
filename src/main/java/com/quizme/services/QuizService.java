@@ -90,8 +90,8 @@ public class QuizService {
                 Set<QuizChoice> choices = quizQuestion.getQuestion().getChoices().stream()
                         .map(c -> new QuizChoice(
                                 savedQuiz.getId(),
-                                quizQuestion,
-                                (short) c.getChoiceId(),
+                                quizQuestion.getId().getQuestionId(),
+                                c.getId().getChoiceId(),
                                 c.getChoice(),
                                 c.isCorrect()
                         ))

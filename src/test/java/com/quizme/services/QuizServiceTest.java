@@ -189,9 +189,9 @@ class QuizServiceTest {
             expectedQuiz = new Quiz(user);
             var expectedQuizQuestion1 = new QuizQuestion(expectedQuiz, q1);
             var expectedQuizQuestion2 = new QuizQuestion(expectedQuiz, q2);
-            expectedQuizQuestion1.setChoices(Set.of(new QuizChoice(0, expectedQuizQuestion1, (short) 1, "C1", true)));
-            expectedQuizQuestion2.setChoices(Set.of(new QuizChoice(0, expectedQuizQuestion2, (short) 1, "C2", true),
-                    new QuizChoice(0, expectedQuizQuestion2, (short) 2, "C3", false)));
+            expectedQuizQuestion1.setChoices(Set.of(new QuizChoice(0, expectedQuizQuestion1.getId().getQuestionId(), (short) 1, "C1", true)));
+            expectedQuizQuestion2.setChoices(Set.of(new QuizChoice(0, expectedQuizQuestion2.getId().getQuestionId(), (short) 1, "C2", true),
+                    new QuizChoice(0, expectedQuizQuestion2.getId().getQuestionId(), (short) 2, "C3", false)));
             expectedQuiz.setQuestions(Set.of(expectedQuizQuestion1, expectedQuizQuestion2));
         }
 
