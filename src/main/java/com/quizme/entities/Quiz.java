@@ -6,6 +6,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -20,13 +21,8 @@ public class Quiz {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "quizzes_questions",
-            joinColumns = @JoinColumn(name = "quiz_id"),
-            inverseJoinColumns = @JoinColumn(name = "question_id")
-    )
-    private Set<Question> questions;
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<QuizQuestion> questions;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -57,11 +53,27 @@ public class Quiz {
         this.submittedAt = submittedAt;
     }
 
-    public Collection<Question> getQuestions() {
+    public Collection<QuizQuestion> getQuestions() {
         return questions;
     }
 
-    public void setQuestions(Set<Question> questions) {
+    public void setQuestions(Set<QuizQuestion> questions) {
         this.questions = questions;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, user, createdAt, submittedAt);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Quiz that = (Quiz) obj;
+        return id == that.id && user.equals(that.user) && createdAt.equals(that.createdAt)
+                && (submittedAt != null && submittedAt.equals(that.submittedAt)
+                    // in case submittedAt is null
+                    || submittedAt == that.submittedAt);
     }
 }

@@ -1,6 +1,7 @@
 package com.quizme.controllers;
 
 import com.quizme.dto.NewQuizDto;
+import com.quizme.dto.SubmittedQuizDto;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
 import com.quizme.services.QuizService;
@@ -40,6 +41,17 @@ public class QuizController {
                 .get(); // since we were able to authenticate user, then they exist
 
         var result = quizService.createQuiz(requestDto, user);
+        if (result.failure() != null) {
+            return responseMapper.map(result, request.getRequestURI());
+        }
+        return ResponseEntity.ok(result.success());
+    }
+
+    @PostMapping("/submit")
+    public ResponseEntity<?> submitQuiz(@RequestBody SubmittedQuizDto requestDto,
+                                        HttpServletRequest request) {
+
+        var result = quizService.submitQuiz(requestDto);
         if (result.failure() != null) {
             return responseMapper.map(result, request.getRequestURI());
         }

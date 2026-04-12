@@ -1,8 +1,9 @@
 package com.quizme.controllers;
 
 import com.quizme.dto.NewQuizDto;
-import com.quizme.dto.QuestionDto;
 import com.quizme.dto.QuizDto;
+import com.quizme.dto.QuizQuestionDto;
+import com.quizme.dto.SubmittedQuizDto;
 import com.quizme.entities.User;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
@@ -24,6 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,8 +52,8 @@ class QuizControllerTest {
     void createQuiz_happyScenario() {
         var user = new User("e", "u");
         var expectedResponse = new QuizDto(1L,
-                Set.of(new QuestionDto(1, "q1", Set.of(), Set.of(), LocalDateTime.now()),
-                        new QuestionDto(2, "q2", Set.of(), Set.of(), LocalDateTime.now())
+                Set.of(new QuizQuestionDto(1, "q1", Set.of(), Set.of(), LocalDateTime.now()),
+                        new QuizQuestionDto(2, "q2", Set.of(), Set.of(), LocalDateTime.now())
                 ),
                 LocalDateTime.now());
         Result<QuizDto> result = Result.success(expectedResponse);
@@ -70,7 +72,7 @@ class QuizControllerTest {
 
     @Test
     @WithMockUser(username = "user@email.com")
-    void createQuestion_failureIsMappedToApiError() {
+    void createQuiz_failureIsMappedToApiError() {
         Result<QuizDto> result = Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "error"));
         when(quizService.createQuiz(any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
@@ -82,6 +84,34 @@ class QuizControllerTest {
 
         // verify the mapper was invoked to map the response to ApiError
         verify(mapper).map(result, "/quiz/new");
+    }
+
+    @Test
+    void submitQuiz_happyScenario() {
+        Result<Void> result = Result.success(null);
+        when(quizService.submitQuiz(any())).thenReturn(result);
+
+        restTestClient.post()
+                .uri("/quiz/submit")
+                .body(new SubmittedQuizDto(1, List.of()))
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody(Void.class);
+    }
+
+    @Test
+    void submitQuiz_failureIsMappedToApiError() {
+        Result<Void> result = Result.failure(new Failure(FailureReason.NOT_FOUND, "error"));
+        when(quizService.submitQuiz(any())).thenReturn(result);
+
+        restTestClient.post()
+                .uri("/quiz/submit")
+                .body(new SubmittedQuizDto(1, List.of()))
+                .exchange();
+
+        // verify the mapper was invoked to map the response to ApiError
+        verify(mapper).map(result, "/quiz/submit");
     }
 
 }

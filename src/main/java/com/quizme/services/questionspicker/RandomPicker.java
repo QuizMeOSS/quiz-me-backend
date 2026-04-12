@@ -31,7 +31,7 @@ public class RandomPicker implements QuestionsPicker {
 
     @Override
     public @NonNull Set<Question> pick(int numberOfQuestions) {
-        var userQuestions = questionRepo.findAllByUser(user);
+        var userQuestions = questionRepo.findAllWithChoicesByUser(user);
         if (insufficientQuestions(numberOfQuestions, userQuestions.size())) {
             throw new InsufficientQuestionsException(numberOfQuestions, userQuestions.size());
         }
