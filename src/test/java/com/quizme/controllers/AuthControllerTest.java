@@ -1,18 +1,18 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
+import com.quizme.exceptionhandler.ApiError;
+import com.quizme.exceptionhandler.result.Failure;
+import com.quizme.exceptionhandler.result.FailureReason;
+import com.quizme.exceptionhandler.result.Result;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.security.JwtUtil;
 import com.quizme.security.TokenFilter;
 import com.quizme.services.AuthService;
 import com.quizme.services.UserService;
-import com.quizme.services.result.Failure;
-import com.quizme.services.result.FailureReason;
-import com.quizme.services.result.Result;
 import com.quizme.utils.CookieUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

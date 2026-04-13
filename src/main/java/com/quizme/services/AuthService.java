@@ -6,12 +6,12 @@ import com.quizme.dto.SsoLoginDto;
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.ExternalIdentity;
 import com.quizme.entities.User;
+import com.quizme.exceptionhandler.result.Failure;
+import com.quizme.exceptionhandler.result.FailureReason;
+import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
-import com.quizme.services.result.Failure;
-import com.quizme.services.result.FailureReason;
-import com.quizme.services.result.Result;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
@@ -48,17 +48,18 @@ public class AuthService {
      * The user may already exist as they may have signed up via OAuth.
      * In that case, we link the credentials to the existing user.
      * Otherwise, we create a new user and link the credentials to them.
+     *
      * @param request RegisterCredentialsRequestDto containing user registration info
      * @return Result<User> containing the registered user or error information
      */
-    public Result<User> register(RegisterCredentialsRequestDto request){
+    public Result<User> register(RegisterCredentialsRequestDto request) {
         var userWithSameEmail = userRepo.findByEmail(request.email());
-        if(userWithSameEmail.isPresent()) {
+        if (userWithSameEmail.isPresent()) {
             return handleExistingEmail(request, userWithSameEmail.get());
         }
 
         var usernameExists = userRepo.findByUsername(request.username()).isPresent();
-        if(usernameExists) {
+        if (usernameExists) {
             return Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "Username already in use"));
         }
 
@@ -68,7 +69,8 @@ public class AuthService {
     /**
      * Handle the case where a user with the same email already exists.
      * Either link credentials to existing user or return an error if credentials already exist.
-     * @param request RegisterCredentialsRequestDto containing user registration info
+     *
+     * @param request           RegisterCredentialsRequestDto containing user registration info
      * @param userWithSameEmail the existing user with the same email
      * @return Result<User> containing the user or error information
      */
@@ -87,7 +89,7 @@ public class AuthService {
         // @Transactional annotation cannot be used because the method is called from within the same class
         // and thus would not be proxied by Spring for transaction management
         // so we use TransactionTemplate instead
-        var transactionResult = transactionTemplate.execute( (TransactionCallback<Object>) _-> {
+        var transactionResult = transactionTemplate.execute((TransactionCallback<Object>) _ -> {
             User user = userRepo.save(new User(request.email(), request.username()));
             userCredentialsService.createCredentialsForUser(user, request.password());
             return user;
@@ -122,27 +124,27 @@ public class AuthService {
         return Result.success(generateTokensForUser(user));
     }
 
-    public TokensDto ssoRegisterOrLogin(SsoLoginDto loginDto){
+    public TokensDto ssoRegisterOrLogin(SsoLoginDto loginDto) {
         var existingUserOpt = userRepo.findByEmail(loginDto.email());
-        if(existingUserOpt.isEmpty()){
+        if (existingUserOpt.isEmpty()) {
             existingUserOpt = Optional.of(registerUserAndExternalIdentity(loginDto));
         } else {
             var externalIdentityOpt = externalIdentityRepo.findByUserId(existingUserOpt.get());
-            if(externalIdentityOpt.isEmpty()
+            if (externalIdentityOpt.isEmpty()
                     // we need to create a different record for GitHub, Google, etc...
-                    || externalIdentityOpt.stream().noneMatch(i -> i.getProvider().equals(loginDto.provider()))){
+                    || externalIdentityOpt.stream().noneMatch(i -> i.getProvider().equals(loginDto.provider()))) {
                 linkExternalIdentityToUser(existingUserOpt.get(), loginDto);
             }
         }
         return generateTokensForUser(existingUserOpt.get());
     }
 
-    private User registerUserAndExternalIdentity(SsoLoginDto dto){
+    private User registerUserAndExternalIdentity(SsoLoginDto dto) {
         // We use a transaction to ensure both user and identity are created atomically
         // @Transactional annotation cannot be used because the method is called from within the same class
         // and thus would not be proxied by Spring for transaction management
         // so we use TransactionTemplate instead
-        var transactionResult = transactionTemplate.execute( (TransactionCallback<Object>) _-> {
+        var transactionResult = transactionTemplate.execute((TransactionCallback<Object>) _ -> {
             User user = userRepo.save(new User(dto.email(), dto.username()));
             externalIdentityRepo.save(new ExternalIdentity(user, dto.provider(),
                     dto.providerUserId(), dto.username(), dto.email()));
@@ -152,7 +154,7 @@ public class AuthService {
         return (User) transactionResult;
     }
 
-    private void linkExternalIdentityToUser(User user, SsoLoginDto dto){
+    private void linkExternalIdentityToUser(User user, SsoLoginDto dto) {
         externalIdentityRepo.save(new ExternalIdentity(user, dto.provider(),
                 dto.providerUserId(), dto.username(), dto.email()));
     }

@@ -2,11 +2,11 @@ package com.quizme.services;
 
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
+import com.quizme.exceptionhandler.result.Failure;
+import com.quizme.exceptionhandler.result.FailureReason;
+import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
-import com.quizme.services.result.Failure;
-import com.quizme.services.result.FailureReason;
-import com.quizme.services.result.Result;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -41,7 +41,7 @@ public class UserService implements UserDetailsService {
 
     public Result<TokensDto> refreshToken(String refreshToken) {
         var isExpired = jwtUtil.isExpired(refreshToken);
-        if(isExpired){
+        if (isExpired) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Refresh token has expired"));
         }
         var userOpt = userRepo.findByEmail(jwtUtil.getUsername(refreshToken));

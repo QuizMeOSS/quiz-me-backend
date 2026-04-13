@@ -1,8 +1,8 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.ApiError;
 import com.quizme.dto.CreatedCategoryDto;
 import com.quizme.dto.NewCategoryDto;
+import com.quizme.exceptionhandler.ApiError;
 import com.quizme.services.CategoryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

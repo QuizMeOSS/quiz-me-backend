@@ -2,14 +2,14 @@ package com.quizme.services;
 
 import com.quizme.dto.*;
 import com.quizme.entities.*;
+import com.quizme.exceptionhandler.result.Failure;
+import com.quizme.exceptionhandler.result.FailureReason;
+import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.QuestionRepo;
 import com.quizme.repos.QuizAttemptRepo;
 import com.quizme.repos.QuizRepo;
 import com.quizme.services.questionspicker.QuestionsPicker;
 import com.quizme.services.questionspicker.QuestionsPickerFactory;
-import com.quizme.services.result.Failure;
-import com.quizme.services.result.FailureReason;
-import com.quizme.services.result.Result;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

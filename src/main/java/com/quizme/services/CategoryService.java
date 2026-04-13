@@ -4,10 +4,10 @@ import com.quizme.dto.CreatedCategoryDto;
 import com.quizme.dto.NewCategoryDto;
 import com.quizme.entities.Category;
 import com.quizme.entities.User;
+import com.quizme.exceptionhandler.result.Failure;
+import com.quizme.exceptionhandler.result.FailureReason;
+import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.CategoryRepo;
-import com.quizme.services.result.Failure;
-import com.quizme.services.result.FailureReason;
-import com.quizme.services.result.Result;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.stream.StreamSupport;
 
 @Service
 public class CategoryService {

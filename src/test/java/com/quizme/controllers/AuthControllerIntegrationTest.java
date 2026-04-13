@@ -1,14 +1,14 @@
 package com.quizme.controllers;
 
 import com.quizme.config.AppProperties;
-import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.entities.User;
+import com.quizme.exceptionhandler.ApiError;
+import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
 import com.quizme.services.AuthService;
-import com.quizme.services.result.FailureReason;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;

@@ -6,6 +6,7 @@ import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
 import com.quizme.services.QuizService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,7 +35,7 @@ public class QuizController {
 
     @PostMapping("/new")
     public ResponseEntity<?> createQuiz(
-            @RequestBody NewQuizDto requestDto,
+            @Valid @RequestBody NewQuizDto requestDto,
             @AuthenticationPrincipal UserDetails authUser,
             HttpServletRequest request) {
         var user = userRepo.findByEmail(authUser.getUsername())

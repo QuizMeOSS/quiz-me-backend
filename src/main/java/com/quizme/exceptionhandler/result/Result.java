@@ -1,4 +1,4 @@
-package com.quizme.services.result;
+package com.quizme.exceptionhandler.result;
 
 public record Result<T>(T success, Failure failure) {
     public static <T> Result<T> success(T data) {

@@ -1,8 +1,8 @@
 package com.quizme.controllers;
 
-import com.quizme.dto.ApiError;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
+import com.quizme.exceptionhandler.ApiError;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.services.AuthService;
 import com.quizme.services.UserService;
@@ -58,14 +58,14 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public ResponseEntity<?> refresh(HttpServletRequest request){
+    public ResponseEntity<?> refresh(HttpServletRequest request) {
         ApiError noTokenError = new ApiError(HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.name(),
                 "Missing refresh token cookie",
                 request.getRequestURI());
 
         var refreshTokenOpt = cookieUtil.getCookieValue(request, CookieUtil.REFRESH_TOKEN_COOKIE_NAME);
-        if(refreshTokenOpt.isEmpty()){
+        if (refreshTokenOpt.isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(noTokenError);
         }
