@@ -1,4 +1,4 @@
-package com.quizme.services.result;
+package com.quizme.exceptionhandler.result;
 
 public enum FailureReason {
     NOT_FOUND,

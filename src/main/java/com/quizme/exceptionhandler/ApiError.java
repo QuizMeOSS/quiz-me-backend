@@ -1,4 +1,4 @@
-package com.quizme.dto;
+package com.quizme.exceptionhandler;
 
 public record ApiError(
         int status,

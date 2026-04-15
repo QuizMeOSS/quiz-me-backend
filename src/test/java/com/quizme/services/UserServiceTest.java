@@ -2,10 +2,10 @@ package com.quizme.services;
 
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
+import com.quizme.exceptionhandler.result.Failure;
+import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.repos.UserRepo;
 import com.quizme.security.JwtUtil;
-import com.quizme.services.result.Failure;
-import com.quizme.services.result.FailureReason;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

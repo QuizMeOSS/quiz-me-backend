@@ -1,7 +1,7 @@
 package com.quizme.mappers;
 
-import com.quizme.dto.ApiError;
-import com.quizme.services.result.Result;
+import com.quizme.exceptionhandler.ApiError;
+import com.quizme.exceptionhandler.result.Result;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;

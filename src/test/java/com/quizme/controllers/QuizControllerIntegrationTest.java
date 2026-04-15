@@ -3,6 +3,7 @@ package com.quizme.controllers;
 import com.quizme.dto.*;
 import com.quizme.entities.Quiz;
 import com.quizme.entities.QuizAttempt;
+import com.quizme.exceptionhandler.ApiError;
 import com.quizme.repos.QuizAttemptRepo;
 import com.quizme.repos.QuizRepo;
 import com.quizme.services.CategoryService;
