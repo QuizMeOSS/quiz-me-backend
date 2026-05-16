@@ -5,6 +5,7 @@ import com.quizme.dto.NewCategoryDto;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.repos.UserRepo;
 import com.quizme.services.CategoryService;
+import com.quizme.utils.ControllerUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,11 +37,13 @@ public class CategoryController {
     public ResponseEntity<?> newCategory(
             @RequestBody NewCategoryDto requestDto,
             @AuthenticationPrincipal UserDetails authUser,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             HttpServletRequest request
     ) {
         var user = userRepo.findByEmail(authUser.getUsername())
                 .get(); // since we were able to authenticate user, then they exist
-        var result = categoryService.createCategory(requestDto, user);
+        var result = categoryService.createCategory(requestDto, user,
+                ControllerUtils.getUserIdempotencyKey(user, idempotencyKey));
 
         if (result.failure() != null) {
             return responseMapper.map(result, request.getRequestURI());
