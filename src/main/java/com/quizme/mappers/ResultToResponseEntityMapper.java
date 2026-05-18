@@ -21,6 +21,7 @@ public class ResultToResponseEntityMapper {
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
             case VALIDATION_FAILED -> HttpStatus.BAD_REQUEST;
             case ALREADY_EXISTS -> HttpStatus.CONFLICT;
+            case UNPROCESSABLE_CONTENT -> HttpStatus.UNPROCESSABLE_CONTENT;
         };
 
         // Create the standard ApiError DTO

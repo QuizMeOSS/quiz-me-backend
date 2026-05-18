@@ -3,16 +3,23 @@ package com.quizme.aspects;
 import com.quizme.exceptionhandler.result.Failure;
 import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
-import com.quizme.services.IdempotencyService;
+import com.quizme.services.idempotency.IdempotencyRecord;
+import com.quizme.services.idempotency.IdempotencyService;
+import com.quizme.services.idempotency.IdempotencyStatus;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JavaType;
+import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.Optional;
 
 @Aspect
@@ -33,49 +40,53 @@ public class IdempotencyAspect {
             throws Throwable {
 
         // Extract idempotency key from method argument
-        String key = extractIdempotencyKey(joinPoint, idempotent.paramName());
-        if (key == null || key.isEmpty()) {
+        Object idempotencyKey = extractArg(joinPoint, idempotent.paramName());
+        if (idempotencyKey == null || idempotencyKey.toString().isEmpty()) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Idempotency-Key is missing"));
         }
 
-        // Build the JavaType from the method's return type
+        Object payload = extractArg(joinPoint, idempotent.payload());
+        String payloadHash = hash(payload);
         JavaType returnType = extractReturnType(joinPoint);
 
-        // Check for a completed cached response
-        Optional<Object> cached = idempotencyService.getResponse(key, returnType);
-        if (cached.isPresent() && !"PROCESSING".equals(cached.get())) {
-            return cached.get();
+        Optional<IdempotencyRecord> existing = idempotencyService.tryReserve(idempotencyKey.toString(), payloadHash, returnType);
+        if (existing.isEmpty()) {
+            // First time — key was free, proceed normally
+            try {
+                Object result = joinPoint.proceed();
+                idempotencyService.storeResponse(idempotencyKey.toString(), payloadHash, result);
+                return result;
+            } catch (Exception e) {
+                idempotencyService.deleteKey(idempotencyKey.toString());
+                throw e;
+            }
         }
 
-        // Detect concurrent duplicate requests
-        if (idempotencyService.isProcessing(key)) {
+        var idempotencyRecord = existing.get();
+
+        // Same key, different payload -> reject immediately
+        if (!idempotencyRecord.payloadHash().equals(payloadHash)) {
+            return Result.failure(new Failure(FailureReason.UNPROCESSABLE_CONTENT,
+                    "Idempotency key '" + idempotencyKey + "' was already used with a different payload."));
+        }
+
+        // Same key, same payload, still processing -> conflict
+        if (IdempotencyStatus.PROCESSING.equals(idempotencyRecord.status())) {
             return Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "Request is already being processed"));
         }
 
-        // Reserve the key and process
-        if (!idempotencyService.tryReserve(key)) {
-            return Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "Duplicate request detected for key: " + key));
-        }
-
-        try {
-            Object result = joinPoint.proceed();
-            idempotencyService.storeResponse(key, result); // Cache the result
-            return result;
-        } catch (Exception e) {
-            // On failure, delete the key so the client can safely retry
-            idempotencyService.deleteKey(key);
-            throw e;
-        }
+        // Same key, same payload, already done -> return cached response
+        return idempotencyRecord.response();
     }
 
     @Nullable
-    private String extractIdempotencyKey(ProceedingJoinPoint joinPoint, String paramName) {
+    private Object extractArg(ProceedingJoinPoint joinPoint, String paramName) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String[] paramNames = signature.getParameterNames();
         Object[] args = joinPoint.getArgs();
         for (int i = 0; i < paramNames.length; i++) {
             if (paramNames[i].equals(paramName)) {
-                return args[i] != null ? args[i].toString() : null;
+                return args[i];
             }
         }
         return null;
@@ -87,5 +98,21 @@ public class IdempotencyAspect {
         // whereas getReturnType() erases them to Result
         var genericReturnType = signature.getMethod().getGenericReturnType();
         return redisObjectMapper.getTypeFactory().constructType(genericReturnType);
+    }
+
+    @NonNull
+    private String hash(Object payload) {
+        try {
+            ObjectMapper mapper = JsonMapper.builder()
+                    // Sort keys for consistent hashing regardless of field order
+                    .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+                    .build();
+            byte[] serialized = mapper.writeValueAsBytes(payload);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(serialized);
+            return HexFormat.of().formatHex(hashBytes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash payload", e);
+        }
     }
 }

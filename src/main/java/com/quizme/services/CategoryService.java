@@ -27,7 +27,7 @@ public class CategoryService {
         this.categoryRepo = categoryRepo;
     }
 
-    @Idempotent
+    @Idempotent(payload = "requestDto")
     public Result<CreatedCategoryDto> createCategory(@NonNull NewCategoryDto requestDto,
                                                      @NonNull User user,
                                                      @Nullable String idempotencyKey) {

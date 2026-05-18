@@ -1,4 +1,4 @@
-package com.quizme.services;
+package com.quizme.services.idempotency;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -33,48 +33,43 @@ public class IdempotencyService {
 
     /**
      * Attempts to reserve an idempotency key.
-     * Returns true if this is the FIRST time we've seen this key (proceed with request).
-     * Returns false if the key already exists (duplicate request).
+     * Returns the existing record if the key already exists, or empty if successfully reserved.
      */
-    public boolean tryReserve(String idempotencyKey) {
+    public Optional<IdempotencyRecord> tryReserve(String idempotencyKey, String payloadHash, JavaType returnType) {
         String redisKey = KEY_PREFIX + idempotencyKey;
+        var idempotencyRecord = new IdempotencyRecord(IdempotencyStatus.PROCESSING, payloadHash, null);
         Boolean isNew = redisTemplate.opsForValue()
-                .setIfAbsent(redisKey, "PROCESSING", LOCK_TTL_MINUTES, TimeUnit.MINUTES);
-        return Boolean.TRUE.equals(isNew);
+                .setIfAbsent(redisKey, idempotencyRecord, LOCK_TTL_MINUTES, TimeUnit.MINUTES);
+        if (Boolean.TRUE.equals(isNew)) {
+            return Optional.empty(); // Key was free, we reserved it
+        }
+
+        // Key already exists — return the existing record for the caller to inspect
+        var record = objectMapper.convertValue(
+                redisTemplate.opsForValue().get(redisKey), IdempotencyRecord.class);
+        // Re-deserialize response into its original concrete type
+        IdempotencyRecord result;
+        if (record.response() != null && returnType != null) {
+            Object typedResponse = objectMapper.convertValue(record.response(), returnType);
+            result = new IdempotencyRecord(record.status(), record.payloadHash(), typedResponse);
+            return Optional.of(result);
+        }
+
+        return Optional.of(record);
     }
 
     /**
      * Stores the final response once processing is complete.
      * Subsequent duplicate requests will get this cached response.
      */
-    public void storeResponse(String idempotencyKey, Object response) {
+    public void storeResponse(String idempotencyKey, String payloadHash, Object response) {
         String redisKey = KEY_PREFIX + idempotencyKey;
+        var idempotencyRecord = new IdempotencyRecord(IdempotencyStatus.DONE, payloadHash, response);
         redisTemplate.opsForValue()
-                .set(redisKey, response, KEY_TTL_DAYS, TimeUnit.DAYS);
-    }
-
-    /**
-     * Retrieves a previously cached response, if any.
-     */
-    public Optional<Object> getResponse(String idempotencyKey, JavaType targetType) {
-        String redisKey = KEY_PREFIX + idempotencyKey;
-        Object value = redisTemplate.opsForValue().get(redisKey);
-        if (value == null) return Optional.empty();
-        // deserialize the LinkedHashMap to correct type
-        return Optional.of(objectMapper.convertValue(value, targetType));
-    }
-
-    /**
-     * Checks if a key is still in PROCESSING state (i.e. first request hasn't finished yet).
-     * If request is still being processed, then we have no cached response yet, and
-     * we shouldn't accept any more requests with the same key.
-     */
-    public boolean isProcessing(String idempotencyKey) {
-        Object value = redisTemplate.opsForValue().get(KEY_PREFIX + idempotencyKey);
-        return "PROCESSING".equals(value);
+                .set(redisKey, idempotencyRecord, KEY_TTL_DAYS, TimeUnit.DAYS);
     }
 
     public void deleteKey(String key) {
-        redisTemplate.delete(key);
+        redisTemplate.delete(KEY_PREFIX + key);
     }
 }
