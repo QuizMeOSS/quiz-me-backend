@@ -47,7 +47,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
     void createCategory_returnsHttp409_whenCategoryWithSameNameExists() {
         // simulate existing category
         var requestDto = new NewCategoryDto("new");
-        categoryService.createCategory(requestDto, user);
+        categoryService.createCategory(requestDto, user, "");
 
         restTestClient.post()
                 .uri("/categories")
@@ -68,9 +68,9 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewCategoryDto("Algorithms");
         var requestDto2 = new NewCategoryDto("OS");
         var requestDto3 = new NewCategoryDto("Databases");
-        categoryService.createCategory(requestDto, user);
-        categoryService.createCategory(requestDto2, user);
-        categoryService.createCategory(requestDto3, user);
+        categoryService.createCategory(requestDto, user, "");
+        categoryService.createCategory(requestDto2, user, "");
+        categoryService.createCategory(requestDto3, user, "");
 
         restTestClient.get()
                 .uri("/categories")

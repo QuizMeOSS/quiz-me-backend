@@ -49,7 +49,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "user@email.com")
     void createCategory_happyScenario() {
         Result<CreatedCategoryDto> result = Result.success(new CreatedCategoryDto(1, "a"));
-        when(categoryService.createCategory(any(), any())).thenReturn(result);
+        when(categoryService.createCategory(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
@@ -67,7 +67,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "user@email.com")
     void createCategory_failureIsMappedToApiError() {
         Result<CreatedCategoryDto> result = Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "exists"));
-        when(categoryService.createCategory(any(), any())).thenReturn(result);
+        when(categoryService.createCategory(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()

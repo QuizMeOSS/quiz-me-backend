@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Idempotent {
-    String paramName() default "idempotencyKey";
+    String keyName() default "idempotencyKey";
 
     String payload();
 }

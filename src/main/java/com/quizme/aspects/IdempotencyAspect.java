@@ -40,7 +40,7 @@ public class IdempotencyAspect {
             throws Throwable {
 
         // Extract idempotency key from method argument
-        Object idempotencyKey = extractArg(joinPoint, idempotent.paramName());
+        Object idempotencyKey = extractArg(joinPoint, idempotent.keyName());
         if (idempotencyKey == null || idempotencyKey.toString().isEmpty()) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Idempotency-Key is missing"));
         }

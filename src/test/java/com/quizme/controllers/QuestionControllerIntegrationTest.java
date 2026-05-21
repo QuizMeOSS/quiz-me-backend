@@ -37,7 +37,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void createQuestion_questionReturned_whenUniqueQuestion() {
-        categoryService.createCategory(new NewCategoryDto("new"), user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "");
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L));
 
         restTestClient.post()
@@ -59,7 +59,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuestion_returnsHttp409_whenQuestionExists_caseInsensitive() {
         // simulate existing category and question
-        categoryService.createCategory(new NewCategoryDto("new"), user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "");
         questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user);
 
         restTestClient.post()
@@ -94,8 +94,8 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void createQuestion_skipsNonExistentCategories() {
-        categoryService.createCategory(new NewCategoryDto("Cat1"), user);
-        categoryService.createCategory(new NewCategoryDto("Cat2"), user);
+        categoryService.createCategory(new NewCategoryDto("Cat1"), user, "");
+        categoryService.createCategory(new NewCategoryDto("Cat2"), user, "");
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L, 3L)); // 3 doesn't exist
 
         restTestClient.post()
@@ -117,9 +117,9 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuestion_skipsCategoriesBelongingToOtherUser() {
         var otherUser = userRepo.save(new User("otherEmail", "otherName"));
-        categoryService.createCategory(new NewCategoryDto("Cat1"), user);
+        categoryService.createCategory(new NewCategoryDto("Cat1"), user, "");
         // should be skipped
-        categoryService.createCategory(new NewCategoryDto("Cat2"), otherUser);
+        categoryService.createCategory(new NewCategoryDto("Cat2"), otherUser, "");
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L));
 
         restTestClient.post()
