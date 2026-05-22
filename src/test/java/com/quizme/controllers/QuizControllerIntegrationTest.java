@@ -37,7 +37,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
 
     @AfterEach
     @Override
-    void resetDatabase() {
+    void clear() {
         jdbcTemplate.execute("DELETE FROM questions_categories");
         jdbcTemplate.execute("DELETE FROM categories");
         jdbcTemplate.execute("DELETE FROM quizzes_attempts");
@@ -49,7 +49,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         jdbcTemplate.execute("ALTER TABLE categories ALTER COLUMN id RESTART WITH 1");
         jdbcTemplate.execute("ALTER TABLE questions ALTER COLUMN id RESTART WITH 1");
         jdbcTemplate.execute("ALTER TABLE quizzes ALTER COLUMN id RESTART WITH 1");
-        super.resetDatabase();
+        super.clear();
     }
 
     @Test
@@ -58,7 +58,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var newQ2Dto = new NewQuestionDto("q2", Set.of(choice), Set.of(1L));
         var q1Dto = new QuestionDto(1, newQ1Dto.question(), newQ1Dto.choices(), newQ1Dto.categories(), LocalDateTime.now());
         var q2Dto = new QuestionDto(2, newQ2Dto.question(), newQ2Dto.choices(), newQ2Dto.categories(), LocalDateTime.now());
-        categoryService.createCategory(new NewCategoryDto("new"), user, "");
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
         questionService.createQuestion(newQ1Dto, user);
         questionService.createQuestion(newQ2Dto, user);
 
@@ -87,7 +87,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var newQ1Dto = new NewQuestionDto("q1", Set.of(choice), Set.of(1L));
         var newQ2Dto = new NewQuestionDto("q2", Set.of(choice), Set.of(1L));
         var newQ3Dto = new NewQuestionDto("q3", Set.of(choice), Set.of(1L));
-        categoryService.createCategory(new NewCategoryDto("new"), user, "");
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
         questionService.createQuestion(newQ1Dto, user);
         questionService.createQuestion(newQ2Dto, user);
         questionService.createQuestion(newQ3Dto, user);
@@ -111,7 +111,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuiz_RETURNS_Http400_WHEN_insufficientQuestions() {
         var newQ1Dto = new NewQuestionDto("q1", Set.of(choice), Set.of(1L));
-        categoryService.createCategory(new NewCategoryDto("new"), user, "");
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
         questionService.createQuestion(newQ1Dto, user);
 
         var requestDto = new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM);
@@ -133,7 +133,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void submitQuiz_SAVES_quizAndAttempts_WHEN_validQuiz() {
-        categoryService.createCategory(new NewCategoryDto("new"), user, "");
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
 
         // no need to create actual 4 choices per question, just 1 or 2 is ok
         QuestionChoiceDto q1choice1 = new QuestionChoiceDto(1, "c1", true);
@@ -212,7 +212,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
      */
     @Test
     void submitQuiz_RETURNS_400_WHEN_multipleAttemptsPerQuestion() {
-        categoryService.createCategory(new NewCategoryDto("new"), user, "");
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
 
         // for simplicity, assume quiz has 1 question
         QuestionChoiceDto q1choice1 = new QuestionChoiceDto(1, "c1", true);

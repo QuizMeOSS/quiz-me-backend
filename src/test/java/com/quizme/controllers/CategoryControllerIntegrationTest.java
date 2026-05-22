@@ -20,8 +20,8 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
 
     @AfterEach
     @Override
-    void resetDatabase() {
-        super.resetDatabase();
+    void clear() {
+        super.clear();
         jdbcTemplate.execute("DELETE FROM categories");
         // reset id sequence
         jdbcTemplate.execute("ALTER TABLE categories ALTER COLUMN id RESTART WITH 1");
@@ -33,6 +33,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
 
         restTestClient.post()
                 .uri("/categories")
+                .header("Idempotency-Key", "some-key")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .exchange()
@@ -47,11 +48,12 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
     void createCategory_returnsHttp409_whenCategoryWithSameNameExists() {
         // simulate existing category
         var requestDto = new NewCategoryDto("new");
-        categoryService.createCategory(requestDto, user, "");
+        categoryService.createCategory(requestDto, user, "k45t");
 
         restTestClient.post()
                 .uri("/categories")
                 .body(requestDto)
+                .header("Idempotency-Key", "some-key2")
                 .cookie("access_token", accessToken)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -68,9 +70,9 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewCategoryDto("Algorithms");
         var requestDto2 = new NewCategoryDto("OS");
         var requestDto3 = new NewCategoryDto("Databases");
-        categoryService.createCategory(requestDto, user, "");
-        categoryService.createCategory(requestDto2, user, "");
-        categoryService.createCategory(requestDto3, user, "");
+        categoryService.createCategory(requestDto, user, "k");
+        categoryService.createCategory(requestDto2, user, "k1");
+        categoryService.createCategory(requestDto3, user, "k2");
 
         restTestClient.get()
                 .uri("/categories")

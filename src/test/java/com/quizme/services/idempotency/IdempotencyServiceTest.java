@@ -26,22 +26,11 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for {@link IdempotencyService} that uses redis docker container.
  */
-@ActiveProfiles("test")
 class IdempotencyServiceTest extends IntegrationTest {
-
-    static RedisContainer redis;
-    @Autowired
-    RedisTemplate<String, Object> redisTemplate;
     @Autowired
     ObjectMapper objectMapper;
 
     IdempotencyService idempotencyService;
-
-    @BeforeAll
-    static void beforeAll() {
-        redis = new RedisContainer(DockerImageName.parse("redis:6.2.6"));
-        redis.start();
-    }
 
     @BeforeEach
     void setup() {
