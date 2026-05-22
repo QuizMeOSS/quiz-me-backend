@@ -25,8 +25,8 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
 
     @AfterEach
     @Override
-    void resetDatabase() {
-        super.resetDatabase();
+    void clear() {
+        super.clear();
         jdbcTemplate.execute("DELETE FROM questions_categories");
         jdbcTemplate.execute("DELETE FROM categories");
         jdbcTemplate.execute("DELETE FROM questions");
@@ -37,13 +37,14 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void createQuestion_questionReturned_whenUniqueQuestion() {
-        categoryService.createCategory(new NewCategoryDto("new"), user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L));
 
         restTestClient.post()
                 .uri("/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
@@ -59,13 +60,14 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuestion_returnsHttp409_whenQuestionExists_caseInsensitive() {
         // simulate existing category and question
-        categoryService.createCategory(new NewCategoryDto("new"), user);
-        questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
+        questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user, "k2");
 
         restTestClient.post()
                 .uri("/questions")
                 .body(new NewQuestionDto("Duplicate Question", Set.of(choice), Set.of(1L)))
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(ApiError.class)
                 .consumeWith(error -> {
@@ -82,6 +84,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .uri("/questions")
                 .body(new NewQuestionDto("Question", Set.of(choice), Set.of()))
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(ApiError.class)
                 .consumeWith(error -> {
@@ -94,14 +97,15 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void createQuestion_skipsNonExistentCategories() {
-        categoryService.createCategory(new NewCategoryDto("Cat1"), user);
-        categoryService.createCategory(new NewCategoryDto("Cat2"), user);
+        categoryService.createCategory(new NewCategoryDto("Cat1"), user, "k1");
+        categoryService.createCategory(new NewCategoryDto("Cat2"), user, "k2");
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L, 3L)); // 3 doesn't exist
 
         restTestClient.post()
                 .uri("/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
@@ -117,15 +121,16 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuestion_skipsCategoriesBelongingToOtherUser() {
         var otherUser = userRepo.save(new User("otherEmail", "otherName"));
-        categoryService.createCategory(new NewCategoryDto("Cat1"), user);
+        categoryService.createCategory(new NewCategoryDto("Cat1"), user, "k1");
         // should be skipped
-        categoryService.createCategory(new NewCategoryDto("Cat2"), otherUser);
+        categoryService.createCategory(new NewCategoryDto("Cat2"), otherUser, "k2");
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L));
 
         restTestClient.post()
                 .uri("/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuestionDto.class)
                 .consumeWith(question -> {

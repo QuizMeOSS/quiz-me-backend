@@ -52,7 +52,7 @@ class QuestionControllerTest {
         Result<Question> result = Result.success(new Question(user,
                 "q",
                 Set.of(new Category(user, "c1"))));
-        when(questionService.createQuestion(any(), any())).thenReturn(result);
+        when(questionService.createQuestion(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
@@ -72,7 +72,7 @@ class QuestionControllerTest {
     @WithMockUser(username = "user@email.com")
     void createQuestion_failureIsMappedToApiError() {
         Result<Question> result = Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "exists"));
-        when(questionService.createQuestion(any(), any())).thenReturn(result);
+        when(questionService.createQuestion(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()

@@ -42,7 +42,7 @@ class CategoryServiceTest {
                         new ConstraintViolationException("", null, ConstraintViolationException.ConstraintKind.UNIQUE, ""))
         );
 
-        var result = categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class));
+        var result = categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class), "");
 
         assertEquals(Result.failure(new Failure(FailureReason.ALREADY_EXISTS,
                 "Category with same name already exists")), result);
@@ -52,7 +52,7 @@ class CategoryServiceTest {
     void createCategory_returnsSuccess_whenUniqueCategory() {
         when(categoryRepo.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
-        var result = categoryService.createCategory(new NewCategoryDto("new"), mock(User.class));
+        var result = categoryService.createCategory(new NewCategoryDto("new"), mock(User.class), "");
 
         assertEquals("new", result.success().name());
     }
@@ -66,7 +66,7 @@ class CategoryServiceTest {
         );
 
         assertThrows(DataIntegrityViolationException.class, () -> {
-            categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class));
+            categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class), "");
         });
     }
 
@@ -79,7 +79,7 @@ class CategoryServiceTest {
         );
 
         assertThrows(DataIntegrityViolationException.class, () -> {
-            categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class));
+            categoryService.createCategory(new NewCategoryDto("dup"), mock(User.class), "");
         });
     }
 

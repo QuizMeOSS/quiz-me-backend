@@ -63,7 +63,7 @@ class QuizServiceTest {
         );
         var result = quizService.createQuiz(
                 new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM),
-                mock(User.class));
+                mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
                 "Requested quiz to contain 3 questions, but user " +
@@ -113,8 +113,8 @@ class QuizServiceTest {
             mockedLocalDateTime.when(LocalDateTime::now).thenReturn(fixedDate);
             result = quizService.createQuiz(
                     new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM),
-                    user
-            );
+                    user,
+                    "k");
         }
 
         assertEquals(fixedDate, result.success().createdAt());
@@ -145,8 +145,8 @@ class QuizServiceTest {
             mockedLocalDateTime.when(LocalDateTime::now).thenReturn(fixedDate);
             quizService.createQuiz(
                     new NewQuizDto(2, QuestionsPicker.Strategy.RANDOM),
-                    user
-            );
+                    user,
+                    "k");
             expectedQuiz = new Quiz(user);
             expectedQuiz.setQuestions(Set.of(new QuizQuestion(expectedQuiz, q1), new QuizQuestion(expectedQuiz, q2)));
         }
@@ -184,8 +184,8 @@ class QuizServiceTest {
             mockedLocalDateTime.when(LocalDateTime::now).thenReturn(fixedDate);
             quizService.createQuiz(
                     new NewQuizDto(2, QuestionsPicker.Strategy.RANDOM),
-                    user
-            );
+                    user,
+                    "k");
             expectedQuiz = new Quiz(user);
             var expectedQuizQuestion1 = new QuizQuestion(expectedQuiz, q1);
             var expectedQuizQuestion2 = new QuizQuestion(expectedQuiz, q2);
@@ -220,8 +220,8 @@ class QuizServiceTest {
         // insufficient questions
         quizService.createQuiz(
                 new NewQuizDto(2, QuestionsPicker.Strategy.RANDOM),
-                user
-        );
+                user,
+                "k");
 
         verify(quizRepo, never()).save(any());
     }

@@ -1,5 +1,6 @@
 package com.quizme.services;
 
+import com.quizme.aspects.Idempotent;
 import com.quizme.dto.NewQuizDto;
 import com.quizme.dto.QuizDto;
 import com.quizme.dto.SubmittedQuizDto;
@@ -57,7 +58,8 @@ public class QuizService {
         this.questionsPickerFactory = questionsPickerFactory;
     }
 
-    public Result<QuizDto> createQuiz(NewQuizDto requestDto, User user) {
+    @Idempotent(payload = "requestDto")
+    public Result<QuizDto> createQuiz(NewQuizDto requestDto, User user, String idempotencyKey) {
         var questionsPicker = questionsPickerFactory.createPicker(requestDto.questionsPickingStrategy(),
                 new QuestionsPickerContext(user, questionRepo));
         Set<Question> pickedQuestions;

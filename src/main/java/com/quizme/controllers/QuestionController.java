@@ -9,10 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/questions")
@@ -36,12 +33,13 @@ public class QuestionController {
     public ResponseEntity<?> newQuestion(
             @RequestBody NewQuestionDto requestDto,
             @AuthenticationPrincipal UserDetails authUser,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             HttpServletRequest request
     ) {
         var user = userRepo.findByEmail(authUser.getUsername())
                 .get(); // since we were able to authenticate user, then they exist
 
-        var result = questionService.createQuestion(requestDto, user);
+        var result = questionService.createQuestion(requestDto, user, idempotencyKey);
 
         if (result.failure() != null) {
             return responseMapper.map(result, request.getRequestURI());

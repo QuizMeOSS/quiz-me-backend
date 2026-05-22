@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/quiz")
@@ -37,11 +34,12 @@ public class QuizController {
     public ResponseEntity<?> createQuiz(
             @Valid @RequestBody NewQuizDto requestDto,
             @AuthenticationPrincipal UserDetails authUser,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             HttpServletRequest request) {
         var user = userRepo.findByEmail(authUser.getUsername())
                 .get(); // since we were able to authenticate user, then they exist
 
-        var result = quizService.createQuiz(requestDto, user);
+        var result = quizService.createQuiz(requestDto, user, idempotencyKey);
         if (result.failure() != null) {
             return responseMapper.map(result, request.getRequestURI());
         }

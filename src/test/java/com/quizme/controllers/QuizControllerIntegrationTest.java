@@ -37,7 +37,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
 
     @AfterEach
     @Override
-    void resetDatabase() {
+    void clear() {
         jdbcTemplate.execute("DELETE FROM questions_categories");
         jdbcTemplate.execute("DELETE FROM categories");
         jdbcTemplate.execute("DELETE FROM quizzes_attempts");
@@ -49,7 +49,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         jdbcTemplate.execute("ALTER TABLE categories ALTER COLUMN id RESTART WITH 1");
         jdbcTemplate.execute("ALTER TABLE questions ALTER COLUMN id RESTART WITH 1");
         jdbcTemplate.execute("ALTER TABLE quizzes ALTER COLUMN id RESTART WITH 1");
-        super.resetDatabase();
+        super.clear();
     }
 
     @Test
@@ -58,9 +58,9 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var newQ2Dto = new NewQuestionDto("q2", Set.of(choice), Set.of(1L));
         var q1Dto = new QuestionDto(1, newQ1Dto.question(), newQ1Dto.choices(), newQ1Dto.categories(), LocalDateTime.now());
         var q2Dto = new QuestionDto(2, newQ2Dto.question(), newQ2Dto.choices(), newQ2Dto.categories(), LocalDateTime.now());
-        categoryService.createCategory(new NewCategoryDto("new"), user);
-        questionService.createQuestion(newQ1Dto, user);
-        questionService.createQuestion(newQ2Dto, user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
+        questionService.createQuestion(newQ1Dto, user, "k2");
+        questionService.createQuestion(newQ2Dto, user, "k3");
 
         var requestDto = new NewQuizDto(2, QuestionsPicker.Strategy.RANDOM);
 
@@ -68,6 +68,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
                 .uri("/quiz/new")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuizDto.class)
                 .consumeWith(quiz -> {
@@ -87,15 +88,16 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var newQ1Dto = new NewQuestionDto("q1", Set.of(choice), Set.of(1L));
         var newQ2Dto = new NewQuestionDto("q2", Set.of(choice), Set.of(1L));
         var newQ3Dto = new NewQuestionDto("q3", Set.of(choice), Set.of(1L));
-        categoryService.createCategory(new NewCategoryDto("new"), user);
-        questionService.createQuestion(newQ1Dto, user);
-        questionService.createQuestion(newQ2Dto, user);
-        questionService.createQuestion(newQ3Dto, user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
+        questionService.createQuestion(newQ1Dto, user, "k2");
+        questionService.createQuestion(newQ2Dto, user, "k3");
+        questionService.createQuestion(newQ3Dto, user, "k4");
 
         var requestDto = new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM);
 
         restTestClient.post()
                 .uri("/quiz/new")
+                .header("Idempotency-Key", "idk1")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .exchange();
@@ -111,8 +113,8 @@ class QuizControllerIntegrationTest extends IntegrationTest {
     @Test
     void createQuiz_RETURNS_Http400_WHEN_insufficientQuestions() {
         var newQ1Dto = new NewQuestionDto("q1", Set.of(choice), Set.of(1L));
-        categoryService.createCategory(new NewCategoryDto("new"), user);
-        questionService.createQuestion(newQ1Dto, user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
+        questionService.createQuestion(newQ1Dto, user, "k2");
 
         var requestDto = new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM);
 
@@ -120,6 +122,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
                 .uri("/quiz/new")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(ApiError.class)
                 .consumeWith(error -> {
@@ -133,7 +136,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
 
     @Test
     void submitQuiz_SAVES_quizAndAttempts_WHEN_validQuiz() {
-        categoryService.createCategory(new NewCategoryDto("new"), user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
 
         // no need to create actual 4 choices per question, just 1 or 2 is ok
         QuestionChoiceDto q1choice1 = new QuestionChoiceDto(1, "c1", true);
@@ -143,12 +146,12 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var newQ1Dto = new NewQuestionDto("q1", Set.of(q1choice1, q1choice2), Set.of(1L));
         var newQ2Dto = new NewQuestionDto("q2", Set.of(q2choice), Set.of(1L));
         var newQ3Dto = new NewQuestionDto("q3", Set.of(q3choice), Set.of(1L));
-        questionService.createQuestion(newQ1Dto, user);
-        questionService.createQuestion(newQ2Dto, user);
-        questionService.createQuestion(newQ3Dto, user);
+        questionService.createQuestion(newQ1Dto, user, "k3");
+        questionService.createQuestion(newQ2Dto, user, "k4");
+        questionService.createQuestion(newQ3Dto, user, "k5");
 
         var newQuizDto = new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM);
-        var quizDto = quizService.createQuiz(newQuizDto, user).success();
+        var quizDto = quizService.createQuiz(newQuizDto, user, "k2").success();
 
         var attempt1 = new QuizQuestionAttemptDto(1L, (short) 2);
         var attempt2 = new QuizQuestionAttemptDto(2L, (short) 1);
@@ -212,16 +215,16 @@ class QuizControllerIntegrationTest extends IntegrationTest {
      */
     @Test
     void submitQuiz_RETURNS_400_WHEN_multipleAttemptsPerQuestion() {
-        categoryService.createCategory(new NewCategoryDto("new"), user);
+        categoryService.createCategory(new NewCategoryDto("new"), user, "k");
 
         // for simplicity, assume quiz has 1 question
         QuestionChoiceDto q1choice1 = new QuestionChoiceDto(1, "c1", true);
         QuestionChoiceDto q1choice2 = new QuestionChoiceDto(2, "c2", false);
         var newQ1Dto = new NewQuestionDto("q1", Set.of(q1choice1, q1choice2), Set.of(1L));
-        questionService.createQuestion(newQ1Dto, user);
+        questionService.createQuestion(newQ1Dto, user, "k3");
 
         var newQuizDto = new NewQuizDto(1, QuestionsPicker.Strategy.RANDOM);
-        var quizDto = quizService.createQuiz(newQuizDto, user).success();
+        var quizDto = quizService.createQuiz(newQuizDto, user, "k2").success();
 
         // 2 attempts for same question -> invalid
         var attempt1 = new QuizQuestionAttemptDto(1L, (short) 2);

@@ -31,7 +31,7 @@ dependencies {
 
 	// For hashing passwords
     implementation 'org.springframework.security:spring-security-crypto'
-    runtimeOnly 'org.bouncycastle:bcprov-jdk18on:1.83'
+	runtimeOnly 'org.bouncycastle:bcprov-jdk18on:1.84'
 
 	// JWT
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
@@ -43,14 +43,17 @@ dependencies {
 
 	runtimeOnly 'org.postgresql:postgresql:42.7.8'
 
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// creating test container for postgres database in tests
+	// creating test containers in tests
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:postgresql'
+	implementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
 }
 
 tasks.named('test') {

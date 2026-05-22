@@ -63,7 +63,7 @@ class QuizControllerTest {
                 ),
                 LocalDateTime.now());
         Result<QuizDto> result = Result.success(expectedResponse);
-        when(quizService.createQuiz(any(), any())).thenReturn(result);
+        when(quizService.createQuiz(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(user));
 
         restTestClient.post()
@@ -87,7 +87,7 @@ class QuizControllerTest {
     @WithMockUser(username = "user@email.com")
     void createQuiz_failureIsMappedToApiError() {
         Result<QuizDto> result = Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "error"));
-        when(quizService.createQuiz(any(), any())).thenReturn(result);
+        when(quizService.createQuiz(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()

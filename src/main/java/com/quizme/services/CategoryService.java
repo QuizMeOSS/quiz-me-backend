@@ -1,5 +1,6 @@
 package com.quizme.services;
 
+import com.quizme.aspects.Idempotent;
 import com.quizme.dto.CreatedCategoryDto;
 import com.quizme.dto.NewCategoryDto;
 import com.quizme.entities.Category;
@@ -10,6 +11,7 @@ import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.CategoryRepo;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +27,10 @@ public class CategoryService {
         this.categoryRepo = categoryRepo;
     }
 
-    public Result<CreatedCategoryDto> createCategory(NewCategoryDto requestDto,
-                                                     User user) {
+    @Idempotent(payload = "requestDto")
+    public Result<CreatedCategoryDto> createCategory(@NonNull NewCategoryDto requestDto,
+                                                     @NonNull User user,
+                                                     @Nullable String idempotencyKey) {
         var category = new Category(user, requestDto.name());
         return saveCategoryOrReturnErrorIfExists(category);
 
