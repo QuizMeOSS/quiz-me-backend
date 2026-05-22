@@ -44,6 +44,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .uri("/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
@@ -60,12 +61,13 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
     void createQuestion_returnsHttp409_whenQuestionExists_caseInsensitive() {
         // simulate existing category and question
         categoryService.createCategory(new NewCategoryDto("new"), user, "k");
-        questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user);
+        questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user, "k2");
 
         restTestClient.post()
                 .uri("/questions")
                 .body(new NewQuestionDto("Duplicate Question", Set.of(choice), Set.of(1L)))
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(ApiError.class)
                 .consumeWith(error -> {
@@ -82,6 +84,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .uri("/questions")
                 .body(new NewQuestionDto("Question", Set.of(choice), Set.of()))
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(ApiError.class)
                 .consumeWith(error -> {
@@ -102,6 +105,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .uri("/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuestionDto.class)
                 .consumeWith(question -> {
@@ -126,6 +130,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                 .uri("/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
+                .header("Idempotency-Key", "idk1")
                 .exchange()
                 .expectBody(QuestionDto.class)
                 .consumeWith(question -> {

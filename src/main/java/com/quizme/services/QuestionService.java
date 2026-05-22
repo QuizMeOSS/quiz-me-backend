@@ -1,5 +1,6 @@
 package com.quizme.services;
 
+import com.quizme.aspects.Idempotent;
 import com.quizme.dto.NewQuestionDto;
 import com.quizme.dto.QuestionChoiceDto;
 import com.quizme.entities.Category;
@@ -39,8 +40,9 @@ public class QuestionService {
         this.transactionTemplate = transactionTemplate;
     }
 
+    @Idempotent(payload = "requestDto")
     public Result<Question> createQuestion(NewQuestionDto requestDto,
-                                           User user) {
+                                           User user, String idempotencyKey) {
         if (requestDto.question().isEmpty()) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Question can't be empty"));
         }

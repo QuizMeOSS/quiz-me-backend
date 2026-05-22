@@ -66,7 +66,7 @@ class QuestionServiceTest {
                         ConstraintViolationException.ConstraintKind.UNIQUE,
                         "question_unique_constraint"
                 )));
-        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class));
+        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.ALREADY_EXISTS,
                 "Question already exists")), result);
@@ -87,7 +87,7 @@ class QuestionServiceTest {
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
 
-        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), user);
+        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), user, "k");
 
         assertEquals("q", result.success().getQuestion());
         assertEquals(Set.of(category), result.success().getCategories());
@@ -112,7 +112,7 @@ class QuestionServiceTest {
                 .thenReturn(List.of(category));
 
         var choice2 = new QuestionChoiceDto(2, "choice2", false);
-        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice, choice2), Set.of()), user);
+        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice, choice2), Set.of()), user, "k");
 
         assertEquals("q", result.success().getQuestion());
         assertEquals(Set.of(category), result.success().getCategories());
@@ -137,7 +137,7 @@ class QuestionServiceTest {
                         new ConstraintViolationException("", null, ConstraintViolationException.ConstraintKind.NOT_NULL, "")));
 
         assertThrows(DataIntegrityViolationException.class, () ->
-                questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class))
+                questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class), "k")
         );
     }
 
@@ -151,14 +151,14 @@ class QuestionServiceTest {
                 .thenThrow(new DataIntegrityViolationException(""));
 
         assertThrows(DataIntegrityViolationException.class, () ->
-                questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class))
+                questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class), "k")
         );
     }
 
     @Test
     void createQuestion_returnsFailure_whenEmptyQuestion() {
 
-        var result = questionService.createQuestion(new NewQuestionDto("", Set.of(choice), Set.of()), mock(User.class));
+        var result = questionService.createQuestion(new NewQuestionDto("", Set.of(choice), Set.of()), mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
                 "Question can't be empty")), result);
@@ -167,7 +167,7 @@ class QuestionServiceTest {
     @Test
     void createQuestion_returnsFailure_whenNoAnswer() {
 
-        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(), Set.of()), mock(User.class));
+        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(), Set.of()), mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
                 "Please provide an answer to the question")), result);
@@ -176,7 +176,7 @@ class QuestionServiceTest {
     @Test
     void createQuestion_returnsFailure_whenNoCategoryProvided() {
 
-        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class));
+        var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice), Set.of()), mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
                 "Question must belong to at least one category")), result);
@@ -187,7 +187,7 @@ class QuestionServiceTest {
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(Collections.emptyList()); // simulate category doesn't exist
         var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice),
-                Set.of(1L)), mock(User.class));
+                Set.of(1L)), mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
                 "Question must belong to at least one category")), result);
@@ -198,7 +198,7 @@ class QuestionServiceTest {
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenThrow(new IllegalArgumentException("EX MESSAGE")); // simulate one or more categories don't belong to user
         var result = questionService.createQuestion(new NewQuestionDto("q", Set.of(choice),
-                Set.of(1L, 2L)), mock(User.class));
+                Set.of(1L, 2L)), mock(User.class), "k");
 
         assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
                 "EX MESSAGE")), result);
