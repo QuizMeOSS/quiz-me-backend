@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: gateway
+  profiles:
+    active: dev
+  ssl:
+    bundle:
+      jks:
+        sslbundle:
+          key:
+            alias: ${SSL_CERT_ALIAS}
+          keystore:
+            location: ${SSL_CERT_LOCATION}
+            password: ${SSL_CERT_PW}
+            type: PKCS12
+          truststore:
+            location: ${SSL_CERT_LOCATION}
+            password: ${SSL_CERT_PW}
+            type: PKCS12
+server:
+  port: 8081
+  ssl:
+    bundle: sslbundle   # links the bundle to the ssl bundle definition above
