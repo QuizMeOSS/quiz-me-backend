@@ -53,7 +53,7 @@ dependencies {
 	// creating test containers in tests
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:postgresql'
-	implementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
+	testImplementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
 }
 
 tasks.named('test') {
