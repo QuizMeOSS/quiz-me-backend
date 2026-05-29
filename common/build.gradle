@@ -1,0 +1,54 @@
+plugins {
+    id "io.spring.dependency-management" version "1.1.7"
+    id "java-library"
+    id 'maven-publish'
+}
+
+group = "com.quizme"
+version = "0.0.1-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:4.0.1"
+    }
+}
+
+
+dependencies {
+    api "org.springframework.boot:spring-boot-starter-data-jpa"
+    api "org.springframework.boot:spring-boot-starter-webmvc"
+    api 'org.springframework.boot:spring-boot-starter-security'
+
+    // JWT
+    api 'io.jsonwebtoken:jjwt-api:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+    runtimeOnly 'org.postgresql:postgresql:42.7.8'
+
+    testImplementation platform("org.junit:junit-bom:5.10.0")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'com.quizme'
+            artifactId = 'common'
+            version = '0.0.1-SNAPSHOT'
+        }
+    }
+    repositories {
+        mavenLocal() // publishes to ~/.m2
+    }
+}
