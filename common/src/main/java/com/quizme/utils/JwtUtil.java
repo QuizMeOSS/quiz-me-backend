@@ -1,6 +1,6 @@
-package com.quizme.security;
+package com.quizme.utils;
 
-import com.quizme.config.AppProperties;
+import com.quizme.AppProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

@@ -23,25 +23,13 @@ ext {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation project(":common")
+	implementation project(":auth")
+
 	implementation 'org.springframework.boot:spring-boot-starter-restclient'
-
-	// For hashing passwords
-    implementation 'org.springframework.security:spring-security-crypto'
-	runtimeOnly 'org.bouncycastle:bcprov-jdk18on:1.84'
-
-	// JWT
-	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
 	// Validating input DTO
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-	runtimeOnly 'org.postgresql:postgresql:42.7.8'
 
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 

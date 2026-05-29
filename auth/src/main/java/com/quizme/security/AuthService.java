@@ -1,4 +1,4 @@
-package com.quizme.services;
+package com.quizme.security;
 
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
@@ -11,7 +11,7 @@ import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
-import com.quizme.security.JwtUtil;
+import com.quizme.utils.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;

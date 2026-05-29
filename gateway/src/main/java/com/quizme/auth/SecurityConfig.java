@@ -1,5 +1,6 @@
-package com.quizme.security;
+package com.quizme.auth;
 
+import com.quizme.TokenToUserFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -12,13 +13,10 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 @Configuration
 public class SecurityConfig {
 
-    private final TokenFilter tokenFilter;
-    private final DelegatingOAuthSuccessHandler delegatingOAuthSuccessHandler;
+    private final TokenToUserFilter tokenFilter;
 
-    public SecurityConfig(TokenFilter tokenFilter,
-                          DelegatingOAuthSuccessHandler delegatingOAuthSuccessHandler) {
+    public SecurityConfig(TokenToUserFilter tokenFilter) {
         this.tokenFilter = tokenFilter;
-        this.delegatingOAuthSuccessHandler = delegatingOAuthSuccessHandler;
     }
 
     @Bean
@@ -34,9 +32,7 @@ public class SecurityConfig {
                                 .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated()
                 )
-                // invoked after oauth2 flow is successful and tokens obtained from provider
-                .oauth2Login(oauth2 -> oauth2
-                        .successHandler(delegatingOAuthSuccessHandler))
+
                 // by default, spring security asks user to login
                 // in case of authentication error.
                 // Instead, we just want 401 error, frontend handles the rest.

@@ -1,4 +1,4 @@
-package com.quizme.services;
+package com.quizme.security;
 
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
@@ -6,7 +6,7 @@ import com.quizme.exceptionhandler.result.Failure;
 import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.UserRepo;
-import com.quizme.security.JwtUtil;
+import com.quizme.utils.JwtUtil;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

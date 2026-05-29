@@ -1,6 +1,6 @@
 package com.quizme.utils;
 
-import com.quizme.config.AppProperties;
+import com.quizme.AppProperties;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseCookie;

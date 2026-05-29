@@ -1,4 +1,4 @@
-package com.quizme.services;
+package com.quizme.security;
 
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;

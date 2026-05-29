@@ -3,6 +3,12 @@ spring:
     name: gateway
   profiles:
     active: dev
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PW}
+  jpa:
+    hibernate:
+      ddl-auto: validate # validate the created tables schema against the entities, app won't start if they don't match
   ssl:
     bundle:
       jks:
@@ -21,3 +27,11 @@ server:
   port: 8081
   ssl:
     bundle: sslbundle   # links the bundle to the ssl bundle definition above
+
+app:
+  auth:
+    pepper: ${PEPPER_STRING}
+    jwt:
+      secret: ${JWT_SECRET}
+      access_token_duration: ${JWT_ACCESS_DURATION} # validity of access token in milliseconds
+      refresh_token_duration: ${JWT_REFRESH_DURATION}

@@ -1,8 +1,8 @@
 package com.quizme.security;
 
-import com.quizme.config.AppProperties;
+import com.quizme.AppProperties;
+import com.quizme.AuthProperties;
 import com.quizme.dto.SsoLoginDto;
-import com.quizme.services.AuthService;
 import com.quizme.utils.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,13 +34,13 @@ public class GithubOAuthSuccessHandler implements OAuthSuccessHandler {
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final AuthService authService;
     private final CookieUtil cookieUtil;
-    private final AppProperties appProperties;
+    private final AuthProperties appProperties;
 
     public GithubOAuthSuccessHandler(RestClient restClient,
                                      OAuth2AuthorizedClientService authorizedClientService,
                                      AuthService authService,
                                      CookieUtil cookieUtil,
-                                     AppProperties appProperties) {
+                                     AuthProperties appProperties) {
         this.restClient = restClient;
         this.authorizedClientService = authorizedClientService;
         this.authService = authService;

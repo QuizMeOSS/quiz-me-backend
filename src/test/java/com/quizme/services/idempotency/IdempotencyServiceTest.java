@@ -4,15 +4,10 @@ import com.quizme.controllers.IntegrationTest;
 import com.quizme.dto.QuestionChoiceDto;
 import com.quizme.dto.QuestionDto;
 import com.quizme.exceptionhandler.result.Result;
-import com.redis.testcontainers.RedisContainer;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ObjectMapper;
 

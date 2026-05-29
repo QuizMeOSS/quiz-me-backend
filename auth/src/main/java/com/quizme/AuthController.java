@@ -1,11 +1,11 @@
-package com.quizme.controllers;
+package com.quizme;
 
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.exceptionhandler.ApiError;
 import com.quizme.mappers.ResultToResponseEntityMapper;
-import com.quizme.services.AuthService;
-import com.quizme.services.UserService;
+import com.quizme.security.AuthService;
+import com.quizme.security.UserService;
 import com.quizme.utils.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;

@@ -1,5 +1,6 @@
-package com.example.gateway;
+package com.quizme;
 
+import com.quizme.auth.AddTokenHeaderFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,10 +29,12 @@ public class GatewayApplication {
     }
 
     @Bean
-    public RouterFunction<ServerResponse> myRoutes(@Value("${app.backend_url}") String backendUrl) {
+    public RouterFunction<ServerResponse> myRoutes(@Value("${app.backend_url}") String backendUrl,
+                                                   AddTokenHeaderFilter addTokenHeaderFilter) {
         return route("my_backend")
                 .route(path("/**"), http())
                 .before(uri(backendUrl))
+                .filter(addTokenHeaderFilter)
                 .build();
     }
 

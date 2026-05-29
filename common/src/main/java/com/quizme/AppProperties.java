@@ -1,4 +1,4 @@
-package com.quizme.config;
+package com.quizme;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -7,23 +7,15 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private final Auth auth = new Auth();
-    private String frontendUrl;
 
     public Auth getAuth() {
         return auth;
     }
 
-    public String getFrontendUrl() {
-        return frontendUrl;
-    }
-
-    public void setFrontendUrl(String url){
-        this.frontendUrl = url;
-    }
 
     public static class Auth {
         private String pepper;
-        private Jwt jwt;
+        private Jwt jwt = new Jwt();
 
         public String getPepper() {
             return pepper;
@@ -37,9 +29,6 @@ public class AppProperties {
             return jwt;
         }
 
-        public void setJwt(Jwt jwt) {
-            this.jwt = jwt;
-        }
     }
 
     public static class Jwt {
