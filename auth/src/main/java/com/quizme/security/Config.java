@@ -28,7 +28,12 @@ public class Config {
                 .addFilterBefore(tokenFilter, BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable) // TODO: research how to deal with csrf
                 .authorizeHttpRequests(c ->
-                        c.anyRequest().permitAll()
+                        c.requestMatchers("/register").permitAll()
+                                .requestMatchers("/login/**").permitAll()
+                                .requestMatchers("/oauth2/**").permitAll()
+                                .requestMatchers("/refresh").permitAll()
+                                .requestMatchers("/error").permitAll()
+                                .anyRequest().authenticated()
                 )
                 // invoked after oauth2 flow is successful and tokens obtained from provider
                 .oauth2Login(oauth2 -> oauth2

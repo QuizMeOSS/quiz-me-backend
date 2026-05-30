@@ -1,56 +1,42 @@
 plugins {
-	id 'java'
 	id 'org.springframework.boot' version '4.0.1'
 	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
 }
 
-group = 'com'
+group = 'com.quizme'
 version = '0.0.1-SNAPSHOT'
-description = 'Backend for Quiz Me App'
-
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
-}
 
 repositories {
-	mavenCentral()
-}
-
-ext {
-	set('testcontainers.version', "1.21.4")
+    mavenCentral()
 }
 
 dependencies {
-	implementation project(":common")
-	implementation project(":auth")
-
-	implementation 'org.springframework.boot:spring-boot-starter-restclient'
-
-	// Validating input DTO
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-	// creating test containers in tests
-	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.testcontainers:postgresql'
-	testImplementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
+    implementation project(':auth')
+    implementation project(':common')
+    implementation project(':business')
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
-}
+subprojects {
+    apply plugin: 'java-library'
 
-test {
-    // trust the testing certificate
-    systemProperty "javax.net.ssl.trustStore", "$projectDir/src/test/resources/truststore.p12"
-    systemProperty "javax.net.ssl.trustStoreType", "PKCS12"
-    systemProperty "javax.net.ssl.trustStorePassword", "somepassword"
+    group = 'com.quizme'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation platform('org.springframework.boot:spring-boot-dependencies:4.0.1')
+    }
+
+    // avoid "(certificate_unknown) PKIX" errors in integration tests by providing truststore
+    tasks.withType(Test).tap {
+        configureEach {
+            systemProperty "javax.net.ssl.trustStore", "$rootDir/src/test/resources/truststore.p12"
+            systemProperty "javax.net.ssl.trustStoreType", "PKCS12"
+            systemProperty "javax.net.ssl.trustStorePassword", "somepassword"
+        }
+    }
 }

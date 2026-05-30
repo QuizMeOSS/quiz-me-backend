@@ -4,8 +4,6 @@ import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.exceptionhandler.ApiError;
 import com.quizme.mappers.ResultToResponseEntityMapper;
-import com.quizme.security.AuthService;
-import com.quizme.security.UserService;
 import com.quizme.utils.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;

@@ -1,5 +1,6 @@
 package com.quizme;
 
+import com.quizme.utils.CookieUtil;
 import com.quizme.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,26 +24,29 @@ public class TokenToUserFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final CookieUtil cookieUtil;
 
-    public TokenToUserFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+    public TokenToUserFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService,
+                             CookieUtil cookieUtil) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.cookieUtil = cookieUtil;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        String token = request.getHeader("Auth-Token");
+        cookieUtil.getCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)
+                .filter(jwtUtil::isValid)
+                .ifPresent(token -> {
+                    String username = jwtUtil.getUsername(token);
+                    UserDetails user = userDetailsService.loadUserByUsername(username);
 
-        if (token != null && jwtUtil.isValid(token)) {
-            String username = jwtUtil.getUsername(token);
-            UserDetails user = userDetailsService.loadUserByUsername(username);
-
-            var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
-        }
+                    var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                });
 
         chain.doFilter(request, response);
     }

@@ -1,7 +1,9 @@
 package com.quizme.auth;
 
 import com.quizme.utils.CookieUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
 import org.springframework.web.servlet.function.HandlerFunction;
@@ -23,11 +25,12 @@ public class AddTokenHeaderFilter implements HandlerFilterFunction<ServerRespons
         HttpServletRequest servletRequest = request.servletRequest();
         Optional<String> tokenOpt = cookieUtil.getCookieValue(servletRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME);
 
-        ServerRequest mutatedRequest = tokenOpt.map(token ->
-                ServerRequest.from(request)
-                        .header("Auth-Token", token)
-                        .build()
-        ).orElse(request);
+        ServerRequest mutatedRequest = tokenOpt.map(token -> {
+            Cookie accessTokenCookie = new Cookie("access_token", token);
+            return ServerRequest.from(request)
+                    .cookies(cookies -> cookies.set("access_token", accessTokenCookie))
+                    .build();
+        }).orElse(request);
 
         return next.handle(mutatedRequest);
     }
