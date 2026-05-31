@@ -1,4 +1,4 @@
-package com.quizme;
+package com.quizme.services;
 
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;
@@ -31,7 +31,7 @@ class UserServiceTest {
     private JwtUtil jwtUtil;
 
     @InjectMocks
-    private UserService userService;
+    private com.quizme.services.UserService userService;
 
     @Test
     void implementsUserDetailsService() {

@@ -3,7 +3,6 @@ package com.quizme.auth;
 import com.quizme.utils.CookieUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
 import org.springframework.web.servlet.function.HandlerFunction;
@@ -13,10 +12,10 @@ import org.springframework.web.servlet.function.ServerResponse;
 import java.util.Optional;
 
 @Component
-public class AddTokenHeaderFilter implements HandlerFilterFunction<ServerResponse, ServerResponse> {
+public class AddAccessTokenCookieFilter implements HandlerFilterFunction<ServerResponse, ServerResponse> {
     private final CookieUtil cookieUtil;
 
-    public AddTokenHeaderFilter(CookieUtil cookieUtil) {
+    public AddAccessTokenCookieFilter(CookieUtil cookieUtil) {
         this.cookieUtil = cookieUtil;
     }
 

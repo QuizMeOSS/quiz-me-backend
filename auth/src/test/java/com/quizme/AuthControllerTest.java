@@ -43,7 +43,7 @@ class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
     @MockitoBean
-    private UserService userService;
+    private com.quizme.services.UserService userService;
     @MockitoBean
     private JwtUtil jwtUtil;
     @MockitoBean

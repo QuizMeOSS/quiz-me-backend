@@ -20,12 +20,12 @@ public class AuthController {
 
     private final ResultToResponseEntityMapper responseMapper;
     private final AuthService authService;
-    private final UserService userService;
+    private final com.quizme.services.UserService userService;
     private final CookieUtil cookieUtil;
 
     public AuthController(ResultToResponseEntityMapper responseMapper,
                           AuthService authService,
-                          UserService userService,
+                          com.quizme.services.UserService userService,
                           CookieUtil cookieUtil) {
         this.responseMapper = responseMapper;
         this.authService = authService;

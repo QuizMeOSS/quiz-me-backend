@@ -1,4 +1,4 @@
-package com.quizme;
+package com.quizme.services;
 
 import com.quizme.dto.TokensDto;
 import com.quizme.entities.User;

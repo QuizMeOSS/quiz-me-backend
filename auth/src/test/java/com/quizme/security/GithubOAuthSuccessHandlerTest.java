@@ -1,6 +1,5 @@
 package com.quizme.security;
 
-import com.quizme.AppProperties;
 import com.quizme.AuthProperties;
 import com.quizme.AuthService;
 import com.quizme.dto.SsoLoginDto;
