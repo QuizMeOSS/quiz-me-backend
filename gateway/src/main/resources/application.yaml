@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: gateway
+  profiles:
+    active: dev
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PW}
+  ssl:
+    bundle:
+      jks:
+        sslbundle:
+          key:
+            alias: ${SSL_CERT_ALIAS}
+          keystore:
+            location: ${SSL_CERT_LOCATION}
+            password: ${SSL_CERT_PW}
+            type: PKCS12
+          truststore:
+            location: ${SSL_CERT_LOCATION}
+            password: ${SSL_CERT_PW}
+            type: PKCS12
+server:
+  port: 8081
+  ssl:
+    bundle: sslbundle   # links the bundle to the ssl bundle definition above
+
+app:
+  auth:
+    jwt:
+      secret: ${JWT_SECRET}
+      access_token_duration: ${JWT_ACCESS_DURATION} # validity of access token in milliseconds
+      refresh_token_duration: ${JWT_REFRESH_DURATION}
