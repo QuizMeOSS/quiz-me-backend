@@ -12,6 +12,10 @@ spring:
           keystore:
             location: classpath:quizme-cert.pfx
             password: somepassword
+  cloud:
+    service-registry:
+      auto-registration:
+        enabled: false
 
 app:
   auth:

@@ -33,6 +33,7 @@ public class Config {
                                 .requestMatchers("/oauth2/**").permitAll()
                                 .requestMatchers("/refresh").permitAll()
                                 .requestMatchers("/error").permitAll()
+                                .requestMatchers("/actuator/health").permitAll()
                                 .anyRequest().authenticated()
                 )
                 // invoked after oauth2 flow is successful and tokens obtained from provider

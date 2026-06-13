@@ -12,6 +12,10 @@ spring:
     properties:
       hibernate:
         dialect: com.quizme.config.CustomPostgreSQLDialect
+  cloud:
+    consul:
+      discovery:
+        scheme: https # backend configured to accepts https only, not http
 #  sql:
 #    init:
 #      mode: always # always run schema and data scripts on startup

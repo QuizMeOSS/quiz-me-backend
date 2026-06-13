@@ -1,0 +1,35 @@
+services:
+  consul-server-1:
+    image: hashicorp/consul:2.0
+    container_name: consul-server-1
+    restart: always
+    # -server -> tells binary to start in server mode (server agent)
+    # -bootstrap-expect -> tells the servers not to form a leader until the expected 3 servers are up
+    # -client=0.0.0.0, only accepted for local development, but unsafe in production to bind to 0.0.0.0
+    #   should be replaced by VPC ip instead.
+    # -ui -> to be able to access localhost:8500/ui
+    command: "agent -server -node=server-1 -bootstrap-expect=3 -client=0.0.0.0 -ui" #
+    ports:
+      - "8500:8500" # Expose the UI and HTTP API from the first server to your host machine
+
+  consul-server-2:
+    image: hashicorp/consul:2.0
+    container_name: consul-server-2
+    restart: always
+    command: "agent -server -node=server-2 -retry-join=consul-server-1 -client=0.0.0.0"
+    depends_on:
+      - consul-server-1
+
+  consul-server-3:
+    image: hashicorp/consul:2.0
+    container_name: consul-server-3
+    restart: always
+    command: "agent -server -node=server-3 -retry-join=consul-server-1 -client=0.0.0.0"
+    depends_on:
+      - consul-server-1
+
+  redis:
+    image: redis:8.6.3
+    container_name: redis
+    ports:
+      - '6379:6379'
