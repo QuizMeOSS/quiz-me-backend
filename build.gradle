@@ -22,6 +22,7 @@ subprojects {
         }
     }
 
+    // avoid "(certificate_unknown) PKIX" errors in integration tests by providing truststore
     tasks.withType(Test).configureEach {
         systemProperty "javax.net.ssl.trustStore", "$rootDir/src/test/resources/truststore.p12"
         systemProperty "javax.net.ssl.trustStoreType", "PKCS12"
