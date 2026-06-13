@@ -6,6 +6,10 @@ spring:
   datasource:
     username: ${DB_USERNAME}
     password: ${DB_PW}
+  cloud:
+    consul:
+      discovery:
+        scheme: https # backend configured to accepts https only, not http
   ssl:
     bundle:
       jks:

@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url:
+      jdbc:postgresql://localhost:5432/quiz_me
+    username: postgres
+    password: admin
+  ssl:
+    bundle:
+      jks:
+        sslbundle:
+          key:
+            alias: te-9f6319ad-c6eb-4203-bf3f-8f4f7b2c1ec0
+          keystore:
+            location: classpath:quizme-cert.pfx
+            password: somepassword
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23liWMkcBUmJfuAXJA
+            client-secret: 91b1b33422eb02d471bc7aaac79022d40297a4f0
+  cloud:
+    consul:
+      discovery:
+        health-check-tls-skip-verify: true # because my certificate is self-signed
+        hostname: localhost
+        health-check-url: https://host.docker.internal:8080/actuator/health
+management:
+  endpoint:
+    health:
+      show-details: always # exposes extra info, safe only for dev env
+
+app:
+  auth:
+    pepper: fd59bee256bcb173599cce65bdd7e77f
+    jwt:
+      secret: dd68a74f029ee5a5eec6a029e9adc0658f5e5b84135e16dfeb1763499aedf37c
+      access_token_duration: 3600000
+      refresh_token_duration: 604800000
+  frontend_url: https://localhost:3000/

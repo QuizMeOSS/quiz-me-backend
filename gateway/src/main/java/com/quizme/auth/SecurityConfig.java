@@ -30,6 +30,7 @@ public class SecurityConfig {
                                 .requestMatchers("/oauth2/**").permitAll()
                                 .requestMatchers("/refresh").permitAll()
                                 .requestMatchers("/error").permitAll()
+                                .requestMatchers("/actuator/health").permitAll()
                                 .anyRequest().authenticated()
                 )
 

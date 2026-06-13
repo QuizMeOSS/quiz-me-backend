@@ -1,6 +1,7 @@
 plugins {
     id 'maven-publish'
     id 'java-test-fixtures' // to expose IntegrationTest
+    id 'java-library'
 }
 
 group = "com.quizme"
@@ -30,7 +31,7 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
-    testFixturesImplementation project(':') // to be able to import QuizmeApplication in integration tests
+    testFixturesImplementation project(':app') // to be able to import QuizmeApplication in integration tests
     testFixturesImplementation platform('org.springframework.boot:spring-boot-dependencies:4.0.1')
     testFixturesImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
