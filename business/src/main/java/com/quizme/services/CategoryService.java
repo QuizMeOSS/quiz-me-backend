@@ -12,6 +12,8 @@ import com.quizme.repos.CategoryRepo;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,8 @@ import java.util.Set;
 
 @Service
 public class CategoryService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CategoryService.class);
 
     private final CategoryRepo categoryRepo;
 
@@ -59,6 +63,7 @@ public class CategoryService {
 
     @NonNull
     public Collection<Category> getAllCategories(User user) {
+        LOGGER.info("Getting all categories for user {}", user.getId());
         return categoryRepo.findAllByUser(user)
                 .stream()
                 .toList();

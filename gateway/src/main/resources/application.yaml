@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: "classpath:observability.yaml"
   application:
     name: gateway
   profiles:
