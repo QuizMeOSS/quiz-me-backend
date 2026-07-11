@@ -4,7 +4,10 @@ import com.quizme.AppProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -43,9 +46,13 @@ public class JwtUtil {
                 .compact();
     }
 
+    @Nullable
     public String getUsername(String token) {
-        return getTokenClaims(token)
-                .getSubject();
+        var tokenClaims = getTokenClaims(token);
+        if (tokenClaims == null) {
+            return null;
+        }
+        return tokenClaims.getSubject();
     }
 
     public boolean isValid(String token){
@@ -54,16 +61,20 @@ public class JwtUtil {
 
     public boolean isExpired(String token){
         try{
-            getTokenClaims(token);
-            return false;
+            return getTokenClaims(token) == null;
         }catch (ExpiredJwtException e){
             return true;
         }
     }
 
+    @Nullable
     private Claims getTokenClaims(String token) {
-        return Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser().verifyWith(key).build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (SignatureException | MalformedJwtException ex) {
+            return null;
+        }
     }
 }

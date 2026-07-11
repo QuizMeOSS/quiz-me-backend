@@ -132,6 +132,15 @@ class JwtUtilTest {
     }
 
     @Test
+    void getUserName_WHEN_malformedToken_ReturnsNull() {
+        var token = "abc";
+
+        var username = jwtUtil.getUsername(token);
+
+        assertNull(username);
+    }
+
+    @Test
     void isExpired_returnsFalseIfTokenValid() {
         var token = jwtUtil.generateAccessToken(SUBJECT);
 

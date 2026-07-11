@@ -74,7 +74,6 @@ class TokenToUserFilterTest {
     @Test
     void testAccessTokenExtractedFromCookie() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
-        when(userDetailsService.loadUserByUsername(any())).thenReturn(mock(UserDetails.class));
         when(jwtUtil.isValid(any())).thenReturn(true);
 
         filter.doFilterInternal(mockRequest, mockResponse, mockChain);

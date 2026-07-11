@@ -41,6 +41,9 @@ public class TokenToUserFilter extends OncePerRequestFilter {
                 .filter(jwtUtil::isValid)
                 .ifPresent(token -> {
                     String username = jwtUtil.getUsername(token);
+                    if (username == null) {
+                        return;
+                    }
                     UserDetails user = userDetailsService.loadUserByUsername(username);
 
                     var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
