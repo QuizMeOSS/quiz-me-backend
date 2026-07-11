@@ -24,6 +24,10 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
+    // observability
+    api 'org.springframework.boot:spring-boot-starter-opentelemetry'
+    api 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.28.1-alpha'
+
     runtimeOnly 'org.postgresql:postgresql:42.7.8'
 
     testImplementation "org.junit.jupiter:junit-jupiter"

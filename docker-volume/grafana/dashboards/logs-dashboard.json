@@ -1,0 +1,431 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "bdf11913-fb9c-4fa0-b18f-5565983bf7d5",
+    "namespace": "default",
+    "uid": "fb3152d3-c258-40bc-9b20-4c7daef576a0",
+    "resourceVersion": "1783533258697003",
+    "generation": 1,
+    "creationTimestamp": "2026-07-08T17:54:18Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "3259162942484480"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "access-policy:service",
+      "grafana.app/folder": "bfrifz7vc7ldsa",
+      "grafana.app/managedBy": "classic-file-provisioning",
+      "grafana.app/managerId": "QuizMe",
+      "grafana.app/sourceChecksum": "586ac22bf3486b6125f4bf51227afb4e",
+      "grafana.app/sourcePath": "/etc/grafana/provisioning/dashboards/logs-dashboard.json",
+      "grafana.app/sourceTimestamp": "1764406171000",
+      "grafana.app/folderTitle": "QuizMe",
+      "grafana.app/folderUrl": "/dashboards/f/bfrifz7vc7ldsa/quizme"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "builtIn": true,
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "query": {
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "group": "grafana",
+            "kind": "DataQuery",
+            "spec": {},
+            "version": "v0"
+          }
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "hidden": false,
+                    "query": {
+                      "datasource": {
+                        "name": "loki_ds"
+                      },
+                      "group": "loki",
+                      "kind": "DataQuery",
+                      "spec": {
+                        "direction": "forward",
+                        "editorMode": "builder",
+                        "expr": "{service_name=~\".+\"} |= `` | json",
+                        "queryType": "range"
+                      },
+                      "version": "v0"
+                    },
+                    "refId": "A"
+                  }
+                }
+              ],
+              "queryOptions": {},
+              "transformations": [
+                {
+                  "group": "extractFields",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "source": "labels"
+                    }
+                  }
+                },
+                {
+                  "group": "organize",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {
+                        "Line": true,
+                        "Time": true,
+                        "Trace": true,
+                        "attributes_exception_message": false,
+                        "attributes_exception_stacktrace": false,
+                        "attributes_exception_type": false,
+                        "body": false,
+                        "detected_level": true,
+                        "exception_message": true,
+                        "exception_stacktrace": true,
+                        "exception_type": false,
+                        "id": false,
+                        "job": true,
+                        "labelTypes": false,
+                        "labels": false,
+                        "level": true,
+                        "scope_name": true,
+                        "service_name": false
+                      },
+                      "indexByName": {
+                        "Line": 4,
+                        "Time": 0,
+                        "Trace": 1,
+                        "__error__": 10,
+                        "__error_details__": 11,
+                        "detected_level": 12,
+                        "flags": 8,
+                        "id": 7,
+                        "labelTypes": 9,
+                        "labels": 5,
+                        "observed_timestamp": 13,
+                        "scope_name": 2,
+                        "service_name": 3,
+                        "severity_number": 14,
+                        "severity_text": 15,
+                        "span_id": 19,
+                        "telemetry_sdk_language": 16,
+                        "telemetry_sdk_name": 17,
+                        "telemetry_sdk_version": 18,
+                        "trace_id": 20,
+                        "tsNs": 6
+                      },
+                      "renameByName": {
+                        "Line": "Message",
+                        "detected_level": "Log Level",
+                        "exception_message": "Exception Message",
+                        "exception_stacktrace": "Stacktrace",
+                        "scope_name": "Class",
+                        "service_name": "Service"
+                      }
+                    }
+                  }
+                },
+                {
+                  "group": "formatString",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "outputFormat": "Upper Case",
+                      "stringField": "Log Level"
+                    }
+                  }
+                },
+                {
+                  "group": "sortBy",
+                  "kind": "Transformation",
+                  "spec": {
+                    "options": {
+                      "fields": {},
+                      "sort": [
+                        {
+                          "field": "Time"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "description": "",
+          "id": 1,
+          "links": [],
+          "title": "Application Log",
+          "vizConfig": {
+            "group": "table",
+            "kind": "VizConfig",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "filterable": true,
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": true
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": 0
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Time"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 162
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Trace"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 90
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "body"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 489
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "level"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 93
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Log Level"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "applyToRow": false,
+                          "mode": "gradient",
+                          "type": "color-background"
+                        }
+                      },
+                      {
+                        "id": "custom.wrapText",
+                        "value": false
+                      },
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "options": {
+                              "DEBUG": {
+                                "color": "light-yellow",
+                                "index": 0
+                              },
+                              "ERROR": {
+                                "color": "red",
+                                "index": 1
+                              },
+                              "INFO": {
+                                "color": "light-green",
+                                "index": 2
+                              },
+                              "TRACE": {
+                                "color": "#404040",
+                                "index": 4
+                              },
+                              "WARN": {
+                                "color": "orange",
+                                "index": 3
+                              }
+                            },
+                            "type": "value"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.width",
+                        "value": 118
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Message"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 653
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Service"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 134
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true,
+                "sortBy": []
+              }
+            },
+            "version": "13.1.0"
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              },
+              "height": 19,
+              "width": 24,
+              "x": 0,
+              "y": 0
+            }
+          }
+        ]
+      }
+    },
+    "links": [
+      {
+        "asDropdown": false,
+        "icon": "dashboard",
+        "includeVars": false,
+        "keepTime": true,
+        "tags": [
+          "traces"
+        ],
+        "targetBlank": true,
+        "title": "Traces",
+        "tooltip": "",
+        "type": "dashboards",
+        "url": ""
+      },
+      {
+        "asDropdown": false,
+        "icon": "external link",
+        "includeVars": false,
+        "keepTime": true,
+        "tags": [
+          "metrics"
+        ],
+        "targetBlank": true,
+        "title": "Metrics",
+        "tooltip": "",
+        "type": "dashboards",
+        "url": ""
+      }
+    ],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "logs"
+    ],
+    "timeSettings": {
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "fiscalYearStartMonth": 0,
+      "from": "now-1h",
+      "hideTimepicker": false,
+      "timezone": "browser",
+      "to": "now"
+    },
+    "title": "Logs",
+    "variables": []
+  }
+}

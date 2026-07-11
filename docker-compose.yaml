@@ -33,3 +33,66 @@ services:
     container_name: redis
     ports:
       - '6379:6379'
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.155.0
+    container_name: otel-collector
+    command: [ "--config=/etc/otel/collector-config.yml" ]
+    volumes:
+      - ./docker-volume/collector-config.yaml:/etc/otel/collector-config.yml
+    ports:
+      - "4317:4317" # grpc
+      - "4318:4318" # http
+      - "9464:9464" # export to prometheus
+  loki:
+    image: grafana/loki:3.7.3
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./docker-volume/loki.yaml:/etc/loki/loki-config.yaml
+      - loki-data:/etc/loki
+    depends_on:
+      - otel-collector
+  tempo:
+    image: grafana/tempo:2.9.3
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./docker-volume/tempo.yaml:/etc/tempo.yaml
+      - tempo-data:/var/tempo
+    depends_on:
+      - otel-collector
+  prometheus:
+    image: prom/prometheus:v3.13.0
+    container_name: prometheus
+    volumes:
+      - ./docker-volume/prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - prometheus-data:/prometheus # persist prometheus metrics
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+  grafana:
+    image: grafana/grafana:13.1.0
+    container_name: grafana
+    volumes:
+      - ./docker-volume/grafana/datasources:/etc/grafana/provisioning/datasources # mount and load initial datasources on startup
+      - ./docker-volume/grafana/dashboards:/etc/grafana/provisioning/dashboards # mount and load initial dashbaord on startup
+      - grafana-data:/var/lib/grafana # save changes made to dashbaord
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+
+volumes:
+  grafana-data:
+  prometheus-data:
+  loki-data:
+  tempo-data:
