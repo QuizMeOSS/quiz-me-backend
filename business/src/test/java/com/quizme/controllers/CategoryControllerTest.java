@@ -53,7 +53,7 @@ class CategoryControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
-                .uri("/categories")
+                .uri("/api/categories")
                 .body(new NewCategoryDto("exists"))
                 .exchange()
                 .expectBody(CreatedCategoryDto.class)
@@ -71,12 +71,12 @@ class CategoryControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
-                .uri("/categories")
+                .uri("/api/categories")
                 .body(new NewCategoryDto("exists"))
                 .exchange();
 
         // verify the mapper was invoked to map the response to ApiError
-        verify(mapper).map(result, "/categories");
+        verify(mapper).map(result, "/api/categories");
     }
 
     @Test
@@ -88,7 +88,7 @@ class CategoryControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.get()
-                .uri("/categories")
+                .uri("/api/categories")
                 .exchange()
                 .expectBody(new ParameterizedTypeReference<List<CreatedCategoryDto>>() {
                 })

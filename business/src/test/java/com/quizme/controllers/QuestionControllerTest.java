@@ -56,7 +56,7 @@ class QuestionControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(new NewQuestionDto("", Set.of(), Set.of()))
                 .exchange()
                 .expectBody(QuestionDto.class)
@@ -76,12 +76,12 @@ class QuestionControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(new NewQuestionDto("", Set.of(), Set.of()))
                 .exchange();
 
         // verify the mapper was invoked to map the response to ApiError
-        verify(mapper).map(result, "/questions");
+        verify(mapper).map(result, "/api/questions");
     }
 
 }

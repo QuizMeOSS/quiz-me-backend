@@ -5,8 +5,8 @@
     "name": "8ef2a47a-7554-4e15-ad02-a93df59815af",
     "namespace": "default",
     "uid": "e1b23827-3b0a-4d52-a350-c07729a63c38",
-    "resourceVersion": "1783761814021982",
-    "generation": 1,
+    "resourceVersion": "1783762121585995",
+    "generation": 2,
     "creationTimestamp": "2026-07-11T09:23:34Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "4217793401806848"
@@ -16,9 +16,11 @@
       "grafana.app/folder": "bfrifz7vc7ldsa",
       "grafana.app/managedBy": "classic-file-provisioning",
       "grafana.app/managerId": "QuizMe",
-      "grafana.app/sourceChecksum": "0cf03d0dcd3ace7ab397b7465979a36d",
+      "grafana.app/sourceChecksum": "aa0acaaee23c63a6be32013421b6405a",
       "grafana.app/sourcePath": "/etc/grafana/provisioning/dashboards/traces-dashboard.json",
-      "grafana.app/sourceTimestamp": "1764406171000",
+      "grafana.app/sourceTimestamp": "1783762050000",
+      "grafana.app/updatedBy": "access-policy:service",
+      "grafana.app/updatedTimestamp": "2026-07-11T09:28:41Z",
       "grafana.app/folderTitle": "QuizMe",
       "grafana.app/folderUrl": "/dashboards/f/bfrifz7vc7ldsa/quizme"
     }
@@ -86,11 +88,12 @@
                             "valueType": "keyword"
                           }
                         ],
-                        "limit": 20,
+                        "limit": 2000,
                         "metricsQueryType": "range",
-                        "query": "{trace:rootName != \"http get /actuator/health\" && trace:rootName != \"info\"}",
+                        "query": "{trace:rootName =~ \".*/api/.*\"}",
                         "queryType": "traceql",
                         "serviceMapUseNativeHistograms": false,
+                        "spss": 100,
                         "tableType": "traces"
                       },
                       "version": "v0"

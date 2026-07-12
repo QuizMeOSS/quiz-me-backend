@@ -55,13 +55,13 @@ class AuthControllerTest {
         var createdUser = new User("e", "u");
         var result = Result.success(createdUser);
         when(authService.register(requestDto)).thenReturn(result);
-        when(mapper.map(result, "/register"))
+        when(mapper.map(result, "/api/register"))
                 .thenAnswer(_ ->
                         ResponseEntity.ok(createdUser)
                 );
 
         restTestClient.post()
-                .uri("/register")
+                .uri("/api/register")
                 .body(requestDto)
                 .exchange()
                 .expectBody(User.class)
@@ -78,12 +78,12 @@ class AuthControllerTest {
         when(authService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange();
 
         // verify the mapper was invoked to map the response to ApiError
-        verify(mapper).map(result, "/login");
+        verify(mapper).map(result, "/api/login");
 
     }
 
@@ -96,7 +96,7 @@ class AuthControllerTest {
         when(authService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange()
                 .expectCookie()
@@ -112,7 +112,7 @@ class AuthControllerTest {
         when(authService.login(requestDto)).thenReturn(result);
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange()
                 .expectCookie()
@@ -122,21 +122,21 @@ class AuthControllerTest {
     @Test
     void refresh_returnsBadRequest_whenNullCookies() {
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .exchange()
                 .expectBody(ApiError.class)
                 .consumeWith(error -> {
                     assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
                     assertEquals(HttpStatus.BAD_REQUEST.name(), error.getResponseBody().error());
                     assertEquals("Missing refresh token cookie", error.getResponseBody().message());
-                    assertEquals("/refresh", error.getResponseBody().path());
+                    assertEquals("/api/refresh", error.getResponseBody().path());
                 });
     }
 
     @Test
     void refresh_returnsBadRequest_whenRefreshTokenCookieNotFound() {
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .cookie("someOtherCookie", "abc")
                 .exchange()
                 .expectBody(ApiError.class)
@@ -144,7 +144,7 @@ class AuthControllerTest {
                     assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
                     assertEquals(HttpStatus.BAD_REQUEST.name(), error.getResponseBody().error());
                     assertEquals("Missing refresh token cookie", error.getResponseBody().message());
-                    assertEquals("/refresh", error.getResponseBody().path());
+                    assertEquals("/api/refresh", error.getResponseBody().path());
                 });
     }
 
@@ -155,11 +155,11 @@ class AuthControllerTest {
         when(userService.refreshToken(any())).thenReturn(result);
 
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .cookie(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "xyz")
                 .exchange();
 
-        verify(mapper).map(result, "/refresh");
+        verify(mapper).map(result, "/api/refresh");
     }
 
     @Test
@@ -173,7 +173,7 @@ class AuthControllerTest {
         when(userService.refreshToken(any())).thenReturn(result);
 
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .exchange()
                 .expectCookie()
                 .valueEquals(CookieUtil.REFRESH_TOKEN_COOKIE_NAME, "refresh");
@@ -190,7 +190,7 @@ class AuthControllerTest {
         when(userService.refreshToken(any())).thenReturn(result);
 
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .exchange()
                 .expectCookie()
                 .valueEquals(CookieUtil.ACCESS_TOKEN_COOKIE_NAME, "access");

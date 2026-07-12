@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/quiz")
+@RequestMapping("/api/quiz")
 public class QuizController {
 
     private final UserRepo userRepo;

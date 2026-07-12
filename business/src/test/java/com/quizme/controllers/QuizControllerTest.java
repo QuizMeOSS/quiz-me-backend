@@ -67,7 +67,7 @@ class QuizControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(user));
 
         restTestClient.post()
-                .uri("/quiz/new")
+                .uri("/api/quiz/new")
                 .body(new NewQuizDto(4, QuestionsPicker.Strategy.RANDOM))
                 .exchange()
                 .expectBody(QuizDto.class)
@@ -91,12 +91,12 @@ class QuizControllerTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 
         restTestClient.post()
-                .uri("/quiz/new")
+                .uri("/api/quiz/new")
                 .body(new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM))
                 .exchange();
 
         // verify the mapper was invoked to map the response to ApiError
-        verify(mapper).map(result, "/quiz/new");
+        verify(mapper).map(result, "/api/quiz/new");
     }
 
     @Test
@@ -105,7 +105,7 @@ class QuizControllerTest {
         when(quizService.submitQuiz(any())).thenReturn(result);
 
         restTestClient.post()
-                .uri("/quiz/submit")
+                .uri("/api/quiz/submit")
                 .body(new SubmittedQuizDto(1, List.of()))
                 .exchange()
                 .expectStatus()
@@ -119,19 +119,19 @@ class QuizControllerTest {
         when(quizService.submitQuiz(any())).thenReturn(result);
 
         restTestClient.post()
-                .uri("/quiz/submit")
+                .uri("/api/quiz/submit")
                 .body(new SubmittedQuizDto(1, List.of()))
                 .exchange();
 
         // verify the mapper was invoked to map the response to ApiError
-        verify(mapper).map(result, "/quiz/submit");
+        verify(mapper).map(result, "/api/quiz/submit");
     }
 
     @ParameterizedTest
     @MethodSource("invalidQuestionsCount")
     void createQuiz_RETURNS_400_WHEN_nonPositiveQuestionsCount(int count) {
         restTestClient.post()
-                .uri("/quiz/new")
+                .uri("/api/quiz/new")
                 .body(new NewQuizDto(count, QuestionsPicker.Strategy.RANDOM))
                 .exchange()
                 .expectBody(ApiError.class)
@@ -139,7 +139,7 @@ class QuizControllerTest {
                     assertEquals(HttpStatus.BAD_REQUEST.value(), error.getResponseBody().status());
                     assertEquals(FailureReason.VALIDATION_FAILED.name(), error.getResponseBody().error());
                     assertEquals("Invalid request parameters: Quiz must have at least one question", error.getResponseBody().message());
-                    assertEquals("/quiz/new", error.getResponseBody().path());
+                    assertEquals("/api/quiz/new", error.getResponseBody().path());
                 });
     }
 }

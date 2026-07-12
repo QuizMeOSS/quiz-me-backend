@@ -42,7 +42,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L));
 
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")
@@ -65,7 +65,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
         questionService.createQuestion(new NewQuestionDto("duplicate question", Set.of(choice), Set.of(1L)), user, "k2");
 
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(new NewQuestionDto("Duplicate Question", Set.of(choice), Set.of(1L)))
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")
@@ -75,14 +75,14 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                     assertEquals(409, error.getResponseBody().status());
                     assertEquals("ALREADY_EXISTS", error.getResponseBody().error());
                     assertEquals("Question already exists", error.getResponseBody().message());
-                    assertEquals("/questions", error.getResponseBody().path());
+                    assertEquals("/api/questions", error.getResponseBody().path());
                 });
     }
 
     @Test
     void createQuestion_returnsHttp409_whenNoCategoryProvided() {
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(new NewQuestionDto("Question", Set.of(choice), Set.of()))
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")
@@ -92,7 +92,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
                     assertEquals(400, error.getResponseBody().status());
                     assertEquals("VALIDATION_FAILED", error.getResponseBody().error());
                     assertEquals("Question must belong to at least one category", error.getResponseBody().message());
-                    assertEquals("/questions", error.getResponseBody().path());
+                    assertEquals("/api/questions", error.getResponseBody().path());
                 });
     }
 
@@ -103,7 +103,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L, 3L)); // 3 doesn't exist
 
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")
@@ -128,7 +128,7 @@ class QuestionControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewQuestionDto("newQ", Set.of(choice), Set.of(1L, 2L));
 
         restTestClient.post()
-                .uri("/questions")
+                .uri("/api/questions")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")

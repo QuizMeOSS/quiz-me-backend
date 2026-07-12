@@ -5,8 +5,8 @@
     "name": "54cf8823-3929-4281-8ea8-ba87dd605cdc",
     "namespace": "default",
     "uid": "17555281-f595-4b44-b7c4-09a83aafc0df",
-    "resourceVersion": "1783780149682013",
-    "generation": 8,
+    "resourceVersion": "1783780403585001",
+    "generation": 9,
     "creationTimestamp": "2026-07-08T17:54:18Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3259163168976896"
@@ -16,11 +16,11 @@
       "grafana.app/folder": "bfrifz7vc7ldsa",
       "grafana.app/managedBy": "classic-file-provisioning",
       "grafana.app/managerId": "QuizMe",
-      "grafana.app/sourceChecksum": "12e09fa1cafb25386544da2d1da0969a",
+      "grafana.app/sourceChecksum": "f9bd98531b1b529e1fb1ed209662f657",
       "grafana.app/sourcePath": "/etc/grafana/provisioning/dashboards/metrics-dashboard.json",
-      "grafana.app/sourceTimestamp": "1783780124000",
+      "grafana.app/sourceTimestamp": "1783780369000",
       "grafana.app/updatedBy": "access-policy:service",
-      "grafana.app/updatedTimestamp": "2026-07-11T14:29:09Z",
+      "grafana.app/updatedTimestamp": "2026-07-11T14:33:23Z",
       "grafana.app/folderTitle": "QuizMe",
       "grafana.app/folderUrl": "/dashboards/f/bfrifz7vc7ldsa/quizme"
     }
@@ -153,7 +153,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(rate(http_server_requests_milliseconds_count {status=~\"5..\", exported_job=\"${exported_job}\"}[$__range]))",
+                        "expr": "sum(rate(http_server_requests_milliseconds_count {status=~\"5..\", uri=~\"/api.*\",exported_job=\"${exported_job}\"}[$__range]))",
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
@@ -238,7 +238,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "sum(increase(http_server_requests_milliseconds_count{status=~\"2..\", uri!=\"/actuator/health\", exported_job=\"${exported_job}\"}[$__range]))",
+                        "expr": "sum(increase(http_server_requests_milliseconds_count{status=~\"2..\", uri=~\"/api.*\", exported_job=\"${exported_job}\"}[$__range]))",
                         "instant": true,
                         "legendFormat": "__auto",
                         "range": false
@@ -321,7 +321,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "sum(increase(http_server_requests_milliseconds_count{status!~\"2..\", exported_job=\"${exported_job}\"}[$__range]))",
+                        "expr": "sum(increase(http_server_requests_milliseconds_count{status!~\"2..\",uri=~\"/api.*\", exported_job=\"${exported_job}\"}[$__range]))",
                         "instant": true,
                         "legendFormat": "__auto",
                         "range": false
@@ -769,7 +769,7 @@
                       "spec": {
                         "editorMode": "code",
                         "exemplar": false,
-                        "expr": "sum(increase(http_server_requests_milliseconds_count{uri!=\"/actuator/health\", exported_job=\"${exported_job}\"}[$__range]))",
+                        "expr": "sum(increase(http_server_requests_milliseconds_count{uri=~\"/api.*\", exported_job=\"${exported_job}\"}[$__range]))",
                         "instant": true,
                         "legendFormat": "__auto",
                         "range": false
@@ -851,7 +851,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(increase(http_server_requests_milliseconds_count{status=~\"2..\", exported_job=\"${exported_job}\"}[$__range]))/sum(increase(http_server_requests_milliseconds_count{exported_job=\"${exported_job}\"}[$__range]))*100",
+                        "expr": "sum(increase(http_server_requests_milliseconds_count{status=~\"2..\", uri=~\"/api.*\",exported_job=\"${exported_job}\"}[$__range]))/sum(increase(http_server_requests_milliseconds_count{uri=~\"/api.*\",exported_job=\"${exported_job}\"}[$__range]))*100",
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
@@ -953,7 +953,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(rate(http_server_requests_milliseconds_count {status=~\"4..\", exported_job=\"${exported_job}\"}[$__range]))",
+                        "expr": "sum(rate(http_server_requests_milliseconds_count {status=~\"4..\", uri=~\"/api.*\",exported_job=\"${exported_job}\"}[$__range]))",
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
@@ -1036,7 +1036,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "sum(rate(http_server_requests_milliseconds_count {status=~\"2..\", exported_job=\"${exported_job}\"}[$__range]))",
+                        "expr": "sum(rate(http_server_requests_milliseconds_count {status=~\"2..\",uri=~\"/api.*\", exported_job=\"${exported_job}\"}[$__range]))",
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
