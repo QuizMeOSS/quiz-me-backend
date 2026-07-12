@@ -66,7 +66,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewQuizDto(2, QuestionsPicker.Strategy.RANDOM);
 
         restTestClient.post()
-                .uri("/quiz/new")
+                .uri("/api/quiz/new")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")
@@ -97,7 +97,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM);
 
         restTestClient.post()
-                .uri("/quiz/new")
+                .uri("/api/quiz/new")
                 .header("Idempotency-Key", "idk1")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
@@ -120,7 +120,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewQuizDto(3, QuestionsPicker.Strategy.RANDOM);
 
         restTestClient.post()
-                .uri("/quiz/new")
+                .uri("/api/quiz/new")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
                 .header("Idempotency-Key", "idk1")
@@ -131,7 +131,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
                     assertEquals("VALIDATION_FAILED", error.getResponseBody().error());
                     assertEquals("Requested quiz to contain 3 questions, " +
                             "but user has 1 applicable questions only", error.getResponseBody().message());
-                    assertEquals("/quiz/new", error.getResponseBody().path());
+                    assertEquals("/api/quiz/new", error.getResponseBody().path());
                 });
     }
 
@@ -160,7 +160,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var submitQuizDto = new SubmittedQuizDto(quizDto.id(), List.of(attempt1, attempt2, attempt3));
 
         restTestClient.post()
-                .uri("/quiz/submit")
+                .uri("/api/quiz/submit")
                 .body(submitQuizDto)
                 .cookie("access_token", accessToken)
                 .exchange()
@@ -195,7 +195,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
     @Test
     void submitQuiz_RETURNS_404_WHEN_QuizNotFound() {
         restTestClient.post()
-                .uri("/quiz/submit")
+                .uri("/api/quiz/submit")
                 .body(new SubmittedQuizDto(1, List.of()))
                 .cookie("access_token", accessToken)
                 .exchange()
@@ -206,7 +206,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
                     assertEquals(404, error.getResponseBody().status());
                     assertEquals("NOT_FOUND", error.getResponseBody().error());
                     assertEquals("Quiz not found", error.getResponseBody().message());
-                    assertEquals("/quiz/submit", error.getResponseBody().path());
+                    assertEquals("/api/quiz/submit", error.getResponseBody().path());
                 });
     }
 
@@ -233,7 +233,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
         var submitQuizDto = new SubmittedQuizDto(quizDto.id(), List.of(attempt1, attempt2));
 
         restTestClient.post()
-                .uri("/quiz/submit")
+                .uri("/api/quiz/submit")
                 .body(submitQuizDto)
                 .cookie("access_token", accessToken)
                 .exchange()
@@ -244,7 +244,7 @@ class QuizControllerIntegrationTest extends IntegrationTest {
                     assertEquals(400, error.getResponseBody().status());
                     assertEquals("VALIDATION_FAILED", error.getResponseBody().error());
                     assertEquals("Found question with multiple answers", error.getResponseBody().message());
-                    assertEquals("/quiz/submit", error.getResponseBody().path());
+                    assertEquals("/api/quiz/submit", error.getResponseBody().path());
                 });
     }
 

@@ -25,10 +25,10 @@ public class SecurityConfig {
                 .addFilterBefore(tokenFilter, BasicAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable) // TODO: research how to deal with csrf
                 .authorizeHttpRequests(c ->
-                        c.requestMatchers("/register").permitAll()
-                                .requestMatchers("/login/**").permitAll()
-                                .requestMatchers("/oauth2/**").permitAll()
-                                .requestMatchers("/refresh").permitAll()
+                        c.requestMatchers("/api/register").permitAll()
+                                .requestMatchers("/api/login").permitAll()
+                                .requestMatchers("/api/oauth2/**").permitAll()
+                                .requestMatchers("/api/refresh").permitAll()
                                 .requestMatchers("/error").permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
                                 .anyRequest().authenticated()

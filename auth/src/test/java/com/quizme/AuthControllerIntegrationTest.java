@@ -33,7 +33,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
 
         restTestClient.post()
-                .uri("/register")
+                .uri("/api/register")
                 .body(requestDto)
                 .exchange()
                 .expectBody(User.class)
@@ -48,12 +48,12 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
 
         restTestClient.post()
-                .uri("/register")
+                .uri("/api/register")
                 .body(requestDto)
                 .exchange();
 
         restTestClient.post()
-                .uri("/register")
+                .uri("/api/register")
                 .body(new RegisterCredentialsRequestDto("u2", "e", "pw2"))
                 .exchange()
                 .expectBody(ApiError.class)
@@ -61,7 +61,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(409, error.getResponseBody().status());
                     Assertions.assertEquals("ALREADY_EXISTS", error.getResponseBody().error());
                     Assertions.assertEquals("This email is already registered", error.getResponseBody().message());
-                    Assertions.assertEquals("/register", error.getResponseBody().path());
+                    Assertions.assertEquals("/api/register", error.getResponseBody().path());
                 });
     }
 
@@ -70,12 +70,12 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
 
         restTestClient.post()
-                .uri("/register")
+                .uri("/api/register")
                 .body(requestDto)
                 .exchange();
 
         restTestClient.post()
-                .uri("/register")
+                .uri("/api/register")
                 .body(new RegisterCredentialsRequestDto("u", "e2", "pw2"))
                 .exchange()
                 .expectBody(ApiError.class)
@@ -83,7 +83,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(409, error.getResponseBody().status());
                     Assertions.assertEquals("ALREADY_EXISTS", error.getResponseBody().error());
                     Assertions.assertEquals("Username already in use", error.getResponseBody().message());
-                    Assertions.assertEquals("/register", error.getResponseBody().path());
+                    Assertions.assertEquals("/api/register", error.getResponseBody().path());
                 });
     }
 
@@ -92,7 +92,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -100,7 +100,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(HttpStatus.NOT_FOUND.value(), error.getResponseBody().status());
                     Assertions.assertEquals("NOT_FOUND", error.getResponseBody().error());
                     Assertions.assertEquals("Incorrect login data", error.getResponseBody().message());
-                    Assertions.assertEquals("/login", error.getResponseBody().path());
+                    Assertions.assertEquals("/api/login", error.getResponseBody().path());
                 });
     }
 
@@ -110,7 +110,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new CredentialsLoginRequestDto("email", "pw");
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -118,7 +118,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(HttpStatus.NOT_FOUND.value(), error.getResponseBody().status());
                     Assertions.assertEquals("NOT_FOUND", error.getResponseBody().error());
                     Assertions.assertEquals("Incorrect login data", error.getResponseBody().message());
-                    Assertions.assertEquals("/login", error.getResponseBody().path());
+                    Assertions.assertEquals("/api/login", error.getResponseBody().path());
                 });
     }
 
@@ -128,7 +128,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new CredentialsLoginRequestDto("email", "pw2");
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -136,7 +136,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(HttpStatus.NOT_FOUND.value(), error.getResponseBody().status());
                     Assertions.assertEquals("NOT_FOUND", error.getResponseBody().error());
                     Assertions.assertEquals("Incorrect login data", error.getResponseBody().message());
-                    Assertions.assertEquals("/login", error.getResponseBody().path());
+                    Assertions.assertEquals("/api/login", error.getResponseBody().path());
                 });
     }
 
@@ -146,7 +146,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var requestDto = new CredentialsLoginRequestDto("email", "pw1");
 
         restTestClient.post()
-                .uri("/login")
+                .uri("/api/login")
                 .body(requestDto)
                 .exchange()
                 .expectCookie()
@@ -177,7 +177,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
         var refreshToken = jwtUtil.generateRefreshToken("email");
 
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .cookie("refresh_token", refreshToken)
                 .exchange()
                 .expectCookie()
@@ -214,7 +214,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                 .compact();
 
         restTestClient.get()
-                .uri("/refresh")
+                .uri("/api/refresh")
                 .cookie("refresh_token", refreshToken)
                 .exchange()
                 .expectBody(ApiError.class)
@@ -222,7 +222,7 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(new ApiError(HttpStatus.BAD_REQUEST.value(),
                             FailureReason.VALIDATION_FAILED.name(),
                             "Refresh token has expired",
-                            "/refresh"), error.getResponseBody());
+                            "/api/refresh"), error.getResponseBody());
                 });
     }
 }

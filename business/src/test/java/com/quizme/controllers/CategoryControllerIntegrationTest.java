@@ -33,7 +33,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
         var requestDto = new NewCategoryDto("new");
 
         restTestClient.post()
-                .uri("/categories")
+                .uri("/api/categories")
                 .header("Idempotency-Key", "some-key")
                 .body(requestDto)
                 .cookie("access_token", accessToken)
@@ -52,7 +52,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
         categoryService.createCategory(requestDto, user, "k45t");
 
         restTestClient.post()
-                .uri("/categories")
+                .uri("/api/categories")
                 .body(requestDto)
                 .header("Idempotency-Key", "some-key2")
                 .cookie("access_token", accessToken)
@@ -62,7 +62,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
                     assertEquals(409, error.getResponseBody().status());
                     assertEquals("ALREADY_EXISTS", error.getResponseBody().error());
                     assertEquals("Category with same name already exists", error.getResponseBody().message());
-                    assertEquals("/categories", error.getResponseBody().path());
+                    assertEquals("/api/categories", error.getResponseBody().path());
                 });
     }
 
@@ -76,7 +76,7 @@ class CategoryControllerIntegrationTest extends IntegrationTest {
         categoryService.createCategory(requestDto3, user, "k2");
 
         restTestClient.get()
-                .uri("/categories")
+                .uri("/api/categories")
                 .cookie("access_token", accessToken)
                 .exchange()
                 .expectBody(new ParameterizedTypeReference<List<CreatedCategoryDto>>() {
