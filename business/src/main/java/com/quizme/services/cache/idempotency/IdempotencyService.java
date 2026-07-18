@@ -1,4 +1,4 @@
-package com.quizme.services.idempotency;
+package com.quizme.services.cache.idempotency;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;

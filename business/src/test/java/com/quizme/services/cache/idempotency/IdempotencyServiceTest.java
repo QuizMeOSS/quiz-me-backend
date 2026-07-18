@@ -1,9 +1,12 @@
-package com.quizme.services.idempotency;
+package com.quizme.services.cache.idempotency;
 
 import com.quizme.IntegrationTest;
 import com.quizme.dto.QuestionChoiceDto;
 import com.quizme.dto.QuestionDto;
 import com.quizme.exceptionhandler.result.Result;
+import com.quizme.services.cache.idempotency.IdempotencyRecord;
+import com.quizme.services.cache.idempotency.IdempotencyService;
+import com.quizme.services.cache.idempotency.IdempotencyStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
