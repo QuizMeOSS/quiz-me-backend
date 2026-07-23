@@ -36,8 +36,8 @@ class QuizQuestionTest {
     void equals_RETURN_false_WHEN_differentQuiz() {
         var user = new User();
         var question = new Question(user, "Q1", Set.of());
-        var quiz1 = new Quiz(new User()); // different users so different quizzes
-        var quiz2 = new Quiz(new User());
+        var quiz1 = new Quiz(new User("email", "username")); // different users so different quizzes
+        var quiz2 = new Quiz(new User("email", "username2"));
         var quizQuestion1 = new QuizQuestion(quiz1, question);
         var quizQuestion2 = new QuizQuestion(quiz2, question);
 

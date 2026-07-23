@@ -1,5 +1,6 @@
 package com.quizme.services;
 
+import com.quizme.dto.CreatedCategoryDto;
 import com.quizme.dto.NewCategoryDto;
 import com.quizme.entities.Category;
 import com.quizme.entities.User;
@@ -7,6 +8,7 @@ import com.quizme.exceptionhandler.result.Failure;
 import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.CategoryRepo;
+import com.quizme.services.cache.ApiCacheService;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +31,8 @@ import static org.mockito.Mockito.when;
 class CategoryServiceTest {
     @Mock
     private CategoryRepo categoryRepo;
+    @Mock
+    private ApiCacheService apiCacheService;
 
     @InjectMocks
     private CategoryService categoryService;
@@ -87,25 +92,25 @@ class CategoryServiceTest {
     void getAllCategories_FetchesAllUserCategories() {
         User user = new User("", "");
         var categories = List.of(
-                new Category(user, "a"),
-                new Category(user, "b")
+                new Category(user.getId(), "a"),
+                new Category(user.getId(), "b")
         );
-        when(categoryRepo.findAllByUser(user)).thenReturn(
+        when(categoryRepo.findAllByUserId(user.getId())).thenReturn(
                 categories
         );
 
         var serviceResponse = categoryService.getAllCategories(user);
 
-        assertEquals("a", serviceResponse.toArray(Category[]::new)[0].getName());
-        assertEquals("b", serviceResponse.toArray(Category[]::new)[1].getName());
+        assertEquals("a", serviceResponse.toArray(CreatedCategoryDto[]::new)[0].name());
+        assertEquals("b", serviceResponse.toArray(CreatedCategoryDto[]::new)[1].name());
     }
 
     @Test
     void getCategoriesByIdsForUser_returnsAllFoundCategories() {
         var user = new User("e", "u");
-        var expectedCat1 = new Category(user, "Cat1");
-        var expectedCat2 = new Category(user, "Cat2");
-        when(categoryRepo.findAllByUserAndIdIn(any(), any())).thenReturn(
+        var expectedCat1 = new Category(user.getId(), "Cat1");
+        var expectedCat2 = new Category(user.getId(), "Cat2");
+        when(categoryRepo.findAllByUserIdAndIdIn(anyLong(), any())).thenReturn(
                 List.of(expectedCat1, expectedCat2)
         );
 

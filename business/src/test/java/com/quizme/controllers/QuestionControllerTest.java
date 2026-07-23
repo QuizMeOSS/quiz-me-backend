@@ -51,7 +51,7 @@ class QuestionControllerTest {
         var user = new User("e", "u");
         Result<Question> result = Result.success(new Question(user,
                 "q",
-                Set.of(new Category(user, "c1"))));
+                Set.of(new Category(user.getId(), "c1"))));
         when(questionService.createQuestion(any(), any(), any())).thenReturn(result);
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
 

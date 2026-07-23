@@ -58,7 +58,7 @@ class QuestionServiceTest {
     @Test
     void createQuestion_returnsFailure_whenQuestionExists() {
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
-                .thenReturn(List.of(new Category(new User("email", "username"), "C1")));
+                .thenReturn(List.of(new Category(1, "C1")));
         when(transactionTemplate.execute(any()))
                 .thenThrow(new DataIntegrityViolationException("dup", new ConstraintViolationException(
                         "duplicate",
@@ -83,7 +83,7 @@ class QuestionServiceTest {
                     return callback.doInTransaction(null);
                 });
         var user = new User("email", "username");
-        var category = new Category(user, "C1");
+        var category = new Category(user.getId(), "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
 
@@ -107,7 +107,7 @@ class QuestionServiceTest {
                     return callback.doInTransaction(null);
                 });
         var user = new User("email", "username");
-        var category = new Category(user, "C1");
+        var category = new Category(user.getId(), "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
 
@@ -128,7 +128,7 @@ class QuestionServiceTest {
     @Test
     void createQuestion_propagatesException_whenUnexpectedConstraintViolation() {
         var user = new User("email", "username");
-        var category = new Category(user, "C1");
+        var category = new Category(user.getId(), "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
         when(transactionTemplate.execute(any()))
@@ -144,7 +144,7 @@ class QuestionServiceTest {
     @Test
     void createCategory_propagatesException_whenUnexpectedExceptionWhileSaving() {
         var user = new User("email", "username");
-        var category = new Category(user, "C1");
+        var category = new Category(user.getId(), "C1");
         when(categoryService.getCategoriesByIdsForUser(any(), any()))
                 .thenReturn(List.of(category));
         when(transactionTemplate.execute(any()))
