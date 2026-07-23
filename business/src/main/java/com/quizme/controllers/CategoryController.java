@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -59,10 +58,7 @@ public class CategoryController {
         var user = userRepo.findByEmail(authUser.getUsername())
                 .get(); // since we were able to authenticate user, then they exist
 
-        var categories = categoryService.getAllCategories(user)
-                .stream().map(CreatedCategoryDto::fromEntity)
-                .collect(Collectors.toSet());
-
+        var categories = categoryService.getAllCategories(user);
         return ResponseEntity.ok(categories);
     }
 }
