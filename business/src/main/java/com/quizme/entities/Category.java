@@ -1,8 +1,8 @@
 package com.quizme.entities;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+
+import java.util.Objects;
 
 @Entity
 @Table(
@@ -14,10 +14,12 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    @ManyToOne
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    // no need to fetch the complete user when fetching the category
+    // because the clients would know the user anyway so no need to return the user object to them
+    // benefit: cached redis values are shorter
+    // note: db fk constraints now responsible for integrity and cascade deletion
+    @Column(name = "user_id", nullable = false)
+    private long userId;
     @Column(nullable = false)
     private String name;
 
@@ -25,8 +27,8 @@ public class Category {
     protected Category() {
     }
 
-    public Category(User user, String name) {
-        this.user = user;
+    public Category(long userId, String name) {
+        this.userId = userId;
         this.name = name;
     }
 
@@ -38,7 +40,21 @@ public class Category {
         return name;
     }
 
-    public User getUser() {
-        return user;
+    public long getUserId() {
+        return userId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, userId, name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Category that = (Category) obj;
+
+        return id == that.id && userId == that.userId && name.equals(that.name);
     }
 }

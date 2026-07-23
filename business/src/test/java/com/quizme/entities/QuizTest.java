@@ -55,8 +55,8 @@ class QuizTest {
         LocalDateTime fixedDate = LocalDateTime.of(2026, 1, 1, 12, 0);
         try (MockedStatic<LocalDateTime> mockedLocalDateTime = Mockito.mockStatic(LocalDateTime.class)) {
             mockedLocalDateTime.when(LocalDateTime::now).thenReturn(fixedDate);
-            var q1 = new Quiz(new User());
-            var q2 = new Quiz(new User());
+            var q1 = new Quiz(new User("email", "username"));
+            var q2 = new Quiz(new User("email2", "username"));
 
             assertEquals(q1.getId(), q2.getId());
             assertEquals(q1.getCreatedAt(), q2.getCreatedAt());

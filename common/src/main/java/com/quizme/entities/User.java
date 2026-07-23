@@ -3,6 +3,7 @@ package com.quizme.entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -35,5 +36,21 @@ public class User {
     }
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, email, username, createdAt);
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        User that = (User) obj;
+
+        return id == that.id && email.equals(that.email) && username.equals(that.username)
+                && createdAt.equals(that.createdAt);
     }
 }

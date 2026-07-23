@@ -25,7 +25,7 @@ public class Quiz {
     private Set<QuizQuestion> questions;
 
     @Column(name = "created_at", nullable = false)
-    private final LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
@@ -35,6 +35,7 @@ public class Quiz {
 
     public Quiz(User user) {
         this.user = user;
+        createdAt = LocalDateTime.now();
     }
 
     public long getId() {
@@ -55,6 +56,10 @@ public class Quiz {
 
     public Collection<QuizQuestion> getQuestions() {
         return questions;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public void setQuestions(Set<QuizQuestion> questions) {
