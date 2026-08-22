@@ -7,9 +7,14 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private final Auth auth = new Auth();
+    private final Kafka kafka = new Kafka();
 
     public Auth getAuth() {
         return auth;
+    }
+
+    public Kafka getKafka() {
+        return kafka;
     }
 
 
@@ -59,6 +64,18 @@ public class AppProperties {
 
         public void setRefreshTokenDuration(long duration) {
             this.refreshTokenDuration = duration;
+        }
+    }
+
+    public static class Kafka {
+        private String url;
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
         }
     }
 }

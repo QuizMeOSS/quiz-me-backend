@@ -1,6 +1,6 @@
 package com.quizme.services.cache;
 
-import com.quizme.services.cache.idempotency.CacheableResults;
+import com.quizme.idempotency.CacheableResults;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

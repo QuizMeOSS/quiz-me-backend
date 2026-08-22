@@ -9,6 +9,8 @@ import com.quizme.entities.User;
 import com.quizme.exceptionhandler.result.Failure;
 import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
+import com.quizme.outbox.OutboxEventTypes;
+import com.quizme.outbox.OutboxService;
 import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.JwtUtil;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -28,19 +31,22 @@ public class AuthService {
     private final TransactionTemplate transactionTemplate;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final OutboxService outboxService;
 
     public AuthService(UserRepo userRepo,
                        UserCredentialsService userCredentialsService,
                        ExternalIdentityRepo externalIdentityRepo,
                        TransactionTemplate transactionTemplate,
                        PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       OutboxService outboxService) {
         this.userRepo = userRepo;
         this.userCredentialsService = userCredentialsService;
         this.externalIdentityRepo = externalIdentityRepo;
         this.transactionTemplate = transactionTemplate;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.outboxService = outboxService;
     }
 
     /**
@@ -92,6 +98,10 @@ public class AuthService {
         var transactionResult = transactionTemplate.execute((TransactionCallback<Object>) _ -> {
             User user = userRepo.save(new User(request.email(), request.username()));
             userCredentialsService.createCredentialsForUser(user, request.password());
+            var payload = Map.of(
+                    "email", request.email()
+            );
+            outboxService.saveEvent(OutboxEventTypes.SIGN_UP, payload);
             return user;
         });
 

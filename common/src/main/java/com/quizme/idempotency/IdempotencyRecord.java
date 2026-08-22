@@ -1,4 +1,4 @@
-package com.quizme.services.cache.idempotency;
+package com.quizme.idempotency;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;

@@ -28,6 +28,8 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-opentelemetry'
     api 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.28.1-alpha'
 
+    api 'org.springframework.boot:spring-boot-starter-kafka'
+
     runtimeOnly 'org.postgresql:postgresql:42.7.8'
 
     testImplementation "org.junit.jupiter:junit-jupiter"
@@ -44,6 +46,7 @@ dependencies {
     testFixturesImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testFixturesImplementation 'org.testcontainers:postgresql'
     testFixturesImplementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
+    testFixturesImplementation 'org.testcontainers:testcontainers-kafka:2.0.5'
 }
 
 tasks.test {

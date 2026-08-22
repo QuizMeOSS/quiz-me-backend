@@ -5,6 +5,7 @@ import com.quizme.repos.UserRepo;
 import com.quizme.utils.CookieUtil;
 import com.quizme.utils.JwtUtil;
 import com.redis.testcontainers.RedisContainer;
+import org.testcontainers.kafka.KafkaContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ import org.testcontainers.utility.DockerImageName;
 public class IntegrationTest {
     static RedisContainer redis;
     static PostgreSQLContainer<?> postgres;
+    static KafkaContainer kafka;
     @Autowired
     protected RestTestClient restTestClient;
     @Autowired
@@ -61,6 +63,9 @@ public class IntegrationTest {
         redis = new RedisContainer(DockerImageName.parse("redis:6.2.6"))
                 .withReuse(true);
         redis.start();
+
+        kafka = new KafkaContainer("apache/kafka-native:4.3.1");
+        kafka.start();
     }
 
     @BeforeEach

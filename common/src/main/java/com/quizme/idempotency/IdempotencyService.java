@@ -1,5 +1,6 @@
-package com.quizme.services.cache.idempotency;
+package com.quizme.idempotency;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JavaType;
@@ -62,7 +63,7 @@ public class IdempotencyService {
      * Stores the final response once processing is complete.
      * Subsequent duplicate requests will get this cached response.
      */
-    public void storeResponse(String idempotencyKey, String payloadHash, Object response) {
+    public void storeResponse(String idempotencyKey, String payloadHash, @Nullable Object response) {
         String redisKey = KEY_PREFIX + idempotencyKey;
         var idempotencyRecord = new IdempotencyRecord(IdempotencyStatus.DONE, payloadHash, response);
         redisTemplate.opsForValue()
