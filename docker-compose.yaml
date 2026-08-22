@@ -90,6 +90,11 @@ services:
       - loki
       - prometheus
       - tempo
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
 
 volumes:
   grafana-data:
