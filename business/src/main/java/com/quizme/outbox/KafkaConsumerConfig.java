@@ -56,7 +56,7 @@ public class KafkaConsumerConfig {
         // Retry a failing record 3 times (1s apart) before giving up on
         // it and moving to the next record, instead of retrying forever
         // and blocking the partition.
-        factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 3)));
+        factory.setCommonErrorHandler(new DefaultErrorHandler((record, exception) -> System.out.println(">>> RECOVERER CALLED (retries exhausted or non-retryable): " + exception), new FixedBackOff(1000L, 3)));
 
         return factory;
     }

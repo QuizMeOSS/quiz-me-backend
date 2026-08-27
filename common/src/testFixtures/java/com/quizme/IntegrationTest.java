@@ -1,10 +1,12 @@
 package com.quizme;
 
+import com.quizme.email.EmailService;
 import com.quizme.entities.User;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.CookieUtil;
 import com.quizme.utils.JwtUtil;
 import com.redis.testcontainers.RedisContainer;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.kafka.KafkaContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,6 +44,8 @@ public class IntegrationTest {
     protected String accessToken;
     @Autowired
     protected RedisTemplate<String, Object> redisTemplate;
+    @MockitoBean
+    protected EmailService emailService; // replaces the real bean with a Mockito mock in the context
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

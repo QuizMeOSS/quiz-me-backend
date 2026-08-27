@@ -61,6 +61,7 @@ public class OutboxEventsConsumer {
             ack.acknowledge();
         } catch (Exception ex) {
             LOGGER.error("Failed to process event {} ({}): {}", eventId, eventType, ex.getMessage(), ex);
+            idempotencyService.deleteKey(IDEMPOTENCY_KEY_PREFIX + eventId); // un-reserve so the retry isn't seen as a duplicate
             // Don't acknowledge; will retry the record until retries are exhausted
             throw ex;
         }
