@@ -9,6 +9,7 @@ import com.quizme.repos.UserRepo;
 import com.quizme.utils.JwtUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.mail.MessagingException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,10 @@ import org.springframework.http.HttpStatus;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 class AuthControllerIntegrationTest extends IntegrationTest {
     @Autowired
@@ -85,6 +90,18 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals("Username already in use", error.getResponseBody().message());
                     Assertions.assertEquals("/api/register", error.getResponseBody().path());
                 });
+    }
+
+    @Test
+    void register_WHEN_registrationSuccessful_THE_confirmationEmailSent() throws MessagingException {
+        var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
+
+        restTestClient.post()
+                .uri("/api/register")
+                .body(requestDto)
+                .exchange();
+        // wait for message relay to read outbox table and publish, and for consumer to process message
+        verify(emailService, timeout(15000)).sendHtmlEmail(any(), any(), any());
     }
 
     @Test
