@@ -1,10 +1,13 @@
 package com.quizme;
 
+import com.quizme.email.EmailService;
 import com.quizme.entities.User;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.CookieUtil;
 import com.quizme.utils.JwtUtil;
 import com.redis.testcontainers.RedisContainer;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.kafka.KafkaContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +30,7 @@ import org.testcontainers.utility.DockerImageName;
 public class IntegrationTest {
     static RedisContainer redis;
     static PostgreSQLContainer<?> postgres;
+    static KafkaContainer kafka;
     @Autowired
     protected RestTestClient restTestClient;
     @Autowired
@@ -40,6 +44,8 @@ public class IntegrationTest {
     protected String accessToken;
     @Autowired
     protected RedisTemplate<String, Object> redisTemplate;
+    @MockitoBean
+    protected EmailService emailService; // replaces the real bean with a Mockito mock in the context
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -49,6 +55,7 @@ public class IntegrationTest {
 
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+        registry.add("app.kafka.url", kafka::getBootstrapServers);
     }
 
     @BeforeAll
@@ -61,6 +68,9 @@ public class IntegrationTest {
         redis = new RedisContainer(DockerImageName.parse("redis:6.2.6"))
                 .withReuse(true);
         redis.start();
+
+        kafka = new KafkaContainer("apache/kafka-native:4.3.1");
+        kafka.start();
     }
 
     @BeforeEach

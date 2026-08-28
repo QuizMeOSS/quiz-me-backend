@@ -9,7 +9,7 @@ import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
 import com.quizme.repos.CategoryRepo;
 import com.quizme.services.cache.ApiCacheService;
-import com.quizme.services.cache.idempotency.CacheableResults;
+import com.quizme.idempotency.CacheableResults;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

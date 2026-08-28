@@ -22,3 +22,5 @@ app:
       secret: 793d83ccec5e1b5df2635f318a036d1d4734d64d2238e1e8e4ad9344ac99e509
       access_token_duration: 3600000
       refresh_token_duration: 604800000
+  kafka:
+    url: localhost:9092

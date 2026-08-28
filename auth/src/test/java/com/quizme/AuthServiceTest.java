@@ -9,6 +9,7 @@ import com.quizme.entities.UserCredentials;
 import com.quizme.exceptionhandler.result.Failure;
 import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
+import com.quizme.outbox.OutboxService;
 import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.JwtUtil;
@@ -44,6 +45,8 @@ public class AuthServiceTest {
     private TransactionTemplate transactionTemplate;
     @Mock
     private JwtUtil jwtUtil;
+    @Mock
+    private OutboxService outboxService;
 
     @InjectMocks
     private AuthService authService;

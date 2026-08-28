@@ -3,7 +3,7 @@ package com.quizme.services.cache;
 import com.quizme.IntegrationTest;
 import com.quizme.entities.Category;
 import com.quizme.entities.Quiz;
-import com.quizme.services.cache.idempotency.CacheableResults;
+import com.quizme.idempotency.CacheableResults;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -26,7 +26,11 @@ dependencies {
 
     // observability
     api 'org.springframework.boot:spring-boot-starter-opentelemetry'
-    api 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.28.1-alpha'
+    api 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
+
+    api 'org.springframework.boot:spring-boot-starter-kafka'
+
+    api 'org.springframework.boot:spring-boot-starter-mail'
 
     runtimeOnly 'org.postgresql:postgresql:42.7.8'
 
@@ -34,6 +38,8 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:5.10.0")
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    // mock email server for tests
+    testImplementation 'com.icegreen:greenmail-junit5:2.0.1'
 
     testFixturesImplementation project(':app') // to be able to import QuizmeApplication in integration tests
     testFixturesImplementation platform('org.springframework.boot:spring-boot-dependencies:4.0.1')
@@ -44,6 +50,7 @@ dependencies {
     testFixturesImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testFixturesImplementation 'org.testcontainers:postgresql'
     testFixturesImplementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
+    testFixturesImplementation 'org.testcontainers:testcontainers-kafka:2.0.5'
 }
 
 tasks.test {

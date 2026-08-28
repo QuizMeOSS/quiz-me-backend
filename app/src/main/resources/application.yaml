@@ -49,6 +49,18 @@ spring:
             token-uri: https://github.com/login/oauth/access_token
             user-info-uri: https://api.github.com/user
             user-name-attribute: login
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 server:
   ssl:
     bundle: sslbundle
@@ -61,3 +73,5 @@ app:
       access_token_duration: ${JWT_ACCESS_DURATION} # validity of access token in milliseconds
       refresh_token_duration: ${JWT_REFRESH_DURATION}
   frontend_url: ${FRONTEND_URL}
+  kafka:
+    url: ${KAFKA_URL}
