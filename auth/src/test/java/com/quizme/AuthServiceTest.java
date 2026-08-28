@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +53,7 @@ public class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void register_registersNewUser_whenUniqueUsernameAndEmail() {
+    void register_WHEN_uniqueUsernameAndEmail_THEN_registersNewUser() {
         var request = new RegisterCredentialsRequestDto("u", "e", "pw");
         when(userRepo.findByEmail("e")).thenReturn(Optional.empty());
         when(userRepo.findByUsername("u")).thenReturn(Optional.empty());
@@ -62,6 +63,8 @@ public class AuthServiceTest {
                     return callback.doInTransaction(null);
                 });
         when(userRepo.save(any())).thenAnswer(_ -> new User("e", "u"));
+        when(userCredentialsService.createCredentialsForUser(any(), any()))
+                .thenReturn(new UserCredentials(new User("e", "u"), "encodedPw"));
 
         var result = authService.register(request);
 
@@ -81,11 +84,13 @@ public class AuthServiceTest {
     }
 
     @Test
-    void register_returnsError_whenEmailAndCredentialsExist() {
+    void GIVEN_emailAndCredentialsExistAndEmailVerified_WHEN_register_RETURN_alreadyExistsError() {
         var email = "e";
         var existingUser = new User(email, "x");
         when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
-        when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.of(new UserCredentials(existingUser, "pw")));
+        var existingCredentials = new UserCredentials(existingUser, "pw");
+        existingCredentials.setEmailVerified();
+        when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.of(existingCredentials));
 
         var result = authService.register(new RegisterCredentialsRequestDto("x", email, "pw"));
 
@@ -93,12 +98,45 @@ public class AuthServiceTest {
     }
 
     @Test
-    void register_linksCredentialsToUser_whenEmailExistsButNoCredentials() {
+    void GIVEN_emailAndCredentialsExistButEmailNotVerified_WHEN_register_RETURN_tooManyRequestsError() {
+        var email = "e";
+        var existingUser = new User(email, "x");
+        when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
+        var existingCredentials = new UserCredentials(existingUser, "pw");
+        // simulate email being sent a few moments ago
+        existingCredentials.updateLastRequestedConfirmationEmailTimestamp();
+
+        when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.of(existingCredentials));
+
+        var result = authService.register(new RegisterCredentialsRequestDto("x", email, "pw"));
+
+        assertEquals(Result.failure(new Failure(FailureReason.TOO_MANY_REQUESTS,
+                "Can't resend confirmation email now, please try again in few minutes")), result);
+    }
+
+    @Test
+    void register_WHEN_lastEmailOldEnough_THEN_schedulesNewEmail() {
+        var email = "e";
+        var existingUser = new User(email, "x");
+        when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
+        var existingCredentials = new UserCredentials(existingUser, "pw");
+        when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.of(existingCredentials));
+
+        authService.register(new RegisterCredentialsRequestDto("u", email, "pw"));
+
+        verify(userCredentialsService).scheduleConfirmationEmail(existingCredentials);
+    }
+
+    @Test
+    void GIVEN_emailExistsButNoCredentials_WHEN_register_THEN_linkCredentialsToUser() {
         var email = "e";
         var existingUsername = "oldUsername";
         var existingUser = new User(email, existingUsername);
         when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
         when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.empty());
+
+        when(userCredentialsService.createCredentialsForUser(any(), any()))
+                .thenReturn(new UserCredentials(new User("e", "u"), "encodedPw"));
 
         var result = authService.register(new RegisterCredentialsRequestDto("newUsername", email, "pw"));
 

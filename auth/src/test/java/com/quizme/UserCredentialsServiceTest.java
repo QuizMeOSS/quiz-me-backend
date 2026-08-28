@@ -56,36 +56,23 @@ class UserCredentialsServiceTest {
     }
 
     @Test
-    void createCredentialsForUser_hashesPasswordBeforeSaving() {
+    void createCredentialsForUser_hashesPassword() {
         String plain = "mySecret";
         String hashed = "hashedSecret";
         when(passwordEncoder.encode(plain)).thenReturn(hashed);
 
+        var createdCredentials = userCredentialsService.createCredentialsForUser(sampleUser, plain);
 
-        userCredentialsService.createCredentialsForUser(sampleUser, plain);
-
-        // assert: capture saved entity and verify password is the hashed value
-        ArgumentCaptor<UserCredentials> captor = ArgumentCaptor.forClass(UserCredentials.class);
-        verify(userCredentialsRepo, times(1)).save(captor.capture());
-        UserCredentials savedCredentials = captor.getValue();
-
-        String savedPassword = savedCredentials.getPassword();
-        assertEquals(hashed, savedPassword);
-
-        User savedUser = savedCredentials.getUser();
-        assertSame(sampleUser, savedUser);
+        var credentialsPassword = createdCredentials.getPassword();
+        assertEquals(hashed, credentialsPassword);
     }
 
     @Test
     void createCredentialsForUser_linksCredentialsToUser() {
-        userCredentialsService.createCredentialsForUser(sampleUser, "pw");
+        var createdCredentials = userCredentialsService.createCredentialsForUser(sampleUser, "pw");
 
-        // assert: capture saved entity and verify user is linked correctly
-        ArgumentCaptor<UserCredentials> captor = ArgumentCaptor.forClass(UserCredentials.class);
-        verify(userCredentialsRepo, times(1)).save(captor.capture());
-        UserCredentials savedCredentials = captor.getValue();
+        var linkedUser = createdCredentials.getUser();
 
-        User savedUser = savedCredentials.getUser();
-        assertSame(sampleUser, savedUser);
+        assertSame(sampleUser, linkedUser);
     }
 }

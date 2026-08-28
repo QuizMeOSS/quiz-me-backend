@@ -5,6 +5,7 @@ import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.entities.User;
 import com.quizme.exceptionhandler.ApiError;
 import com.quizme.exceptionhandler.result.FailureReason;
+import com.quizme.repos.UserCredentialsRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.JwtUtil;
 import io.jsonwebtoken.Jwts;
@@ -31,6 +32,8 @@ class AuthControllerIntegrationTest extends IntegrationTest {
     @Autowired
     private UserRepo userRepo;
     @Autowired
+    private UserCredentialsRepo userCredentialsRepo;
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Test
@@ -49,13 +52,17 @@ class AuthControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void register_returnsHttp409_whenUsedEmail() {
+    void GIVEN_emailAlreadyExistsAndVerified_WHEN_register_RETURN_http409() {
         var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
 
         restTestClient.post()
                 .uri("/api/register")
                 .body(requestDto)
                 .exchange();
+        // simulate user verifying email
+        var userCredentials = userCredentialsRepo.findAll().iterator().next();
+        userCredentials.setEmailVerified();
+        userCredentialsRepo.save(userCredentials);
 
         restTestClient.post()
                 .uri("/api/register")
@@ -66,6 +73,42 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals(409, error.getResponseBody().status());
                     Assertions.assertEquals("ALREADY_EXISTS", error.getResponseBody().error());
                     Assertions.assertEquals("This email is already registered", error.getResponseBody().message());
+                    Assertions.assertEquals("/api/register", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void register_WHEN_registrationSuccessful_THEN_confirmationEmailSent() throws MessagingException {
+        var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
+
+        restTestClient.post()
+                .uri("/api/register")
+                .body(requestDto)
+                .exchange();
+        // wait for message relay to read outbox table and publish, and for consumer to process message
+        verify(emailService, timeout(15000)).sendHtmlEmail(any(), any(), any());
+    }
+
+    @Test
+    void GIVEN_anEmailWasSentFewMomentsAgo_WHEN_register_RETURN_http429() {
+        var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
+
+        restTestClient.post()
+                .uri("/api/register")
+                .body(requestDto)
+                .exchange();
+        // when registering, a confirmation email is automatically scheduled
+        // next register call should try resending email and fail because not enough time has passed
+
+        restTestClient.post()
+                .uri("/api/register")
+                .body(new RegisterCredentialsRequestDto("u2", "e", "pw2"))
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    Assertions.assertEquals(429, error.getResponseBody().status());
+                    Assertions.assertEquals("TOO_MANY_REQUESTS", error.getResponseBody().error());
+                    Assertions.assertEquals("Can't resend confirmation email now, please try again in few minutes", error.getResponseBody().message());
                     Assertions.assertEquals("/api/register", error.getResponseBody().path());
                 });
     }
@@ -90,18 +133,6 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                     Assertions.assertEquals("Username already in use", error.getResponseBody().message());
                     Assertions.assertEquals("/api/register", error.getResponseBody().path());
                 });
-    }
-
-    @Test
-    void register_WHEN_registrationSuccessful_THE_confirmationEmailSent() throws MessagingException {
-        var requestDto = new RegisterCredentialsRequestDto("u", "e", "pw");
-
-        restTestClient.post()
-                .uri("/api/register")
-                .body(requestDto)
-                .exchange();
-        // wait for message relay to read outbox table and publish, and for consumer to process message
-        verify(emailService, timeout(15000)).sendHtmlEmail(any(), any(), any());
     }
 
     @Test
