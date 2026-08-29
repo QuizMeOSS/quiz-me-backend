@@ -132,22 +132,28 @@ public class AuthService {
      * @param body {@link CredentialsLoginRequestDto} object containing email and password
      * @return {@link Result} containing tokens or error information.
      */
-    // TODO: only login if email verified
     public Result<TokensDto> login(CredentialsLoginRequestDto body) {
         var userOptional = userRepo.findByEmail(body.email());
+        var errorMessage = "Incorrect login data";
         if (userOptional.isEmpty()) {
-            return Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
+            return Result.failure(new Failure(FailureReason.NOT_FOUND, errorMessage));
         }
         var user = userOptional.get();
         var userCredentialsOptional = userCredentialsService.findByUserId(user);
         if (userCredentialsOptional.isEmpty()) {
             return Result.failure(new Failure(FailureReason.NOT_FOUND,
-                    "Incorrect login data"));
+                    errorMessage));
         }
 
-        if (!passwordEncoder.matches(body.password(), userCredentialsOptional.get().getPassword())) {
+        var userCredentials = userCredentialsOptional.get();
+        if (!userCredentials.isEmailVerified()) {
             return Result.failure(new Failure(FailureReason.NOT_FOUND,
-                    "Incorrect login data"));
+                    errorMessage));
+        }
+
+        if (!passwordEncoder.matches(body.password(), userCredentials.getPassword())) {
+            return Result.failure(new Failure(FailureReason.NOT_FOUND,
+                    errorMessage));
         }
 
         return Result.success(generateTokensForUser(user));

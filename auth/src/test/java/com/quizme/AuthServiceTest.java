@@ -23,7 +23,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +33,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
+    public static final User USER = new User("email", "u");
     @Mock
     private UserRepo userRepo;
     @Mock
@@ -54,22 +54,22 @@ public class AuthServiceTest {
 
     @Test
     void register_WHEN_uniqueUsernameAndEmail_THEN_registersNewUser() {
-        var request = new RegisterCredentialsRequestDto("u", "e", "pw");
-        when(userRepo.findByEmail("e")).thenReturn(Optional.empty());
-        when(userRepo.findByUsername("u")).thenReturn(Optional.empty());
+        var request = new RegisterCredentialsRequestDto(USER.getUsername(), USER.getEmail(), "pw");
+        when(userRepo.findByEmail(USER.getEmail())).thenReturn(Optional.empty());
+        when(userRepo.findByUsername(USER.getUsername())).thenReturn(Optional.empty());
         when(transactionTemplate.execute(any(TransactionCallback.class)))
                 .thenAnswer(invocation -> {
                     TransactionCallback<?> callback = invocation.getArgument(0);
                     return callback.doInTransaction(null);
                 });
-        when(userRepo.save(any())).thenAnswer(_ -> new User("e", "u"));
+        when(userRepo.save(any())).thenAnswer(_ -> USER);
         when(userCredentialsService.createCredentialsForUser(any(), any()))
-                .thenReturn(new UserCredentials(new User("e", "u"), "encodedPw"));
+                .thenReturn(new UserCredentials(USER, "encodedPw"));
 
         var result = authService.register(request);
 
-        assertEquals("u", result.success().getUsername());
-        assertEquals("e", result.success().getEmail());
+        assertEquals(USER.getUsername(), result.success().getUsername());
+        assertEquals(USER.getEmail(), result.success().getEmail());
     }
 
     @Test
@@ -99,16 +99,15 @@ public class AuthServiceTest {
 
     @Test
     void GIVEN_emailAndCredentialsExistButEmailNotVerified_WHEN_register_RETURN_tooManyRequestsError() {
-        var email = "e";
-        var existingUser = new User(email, "x");
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
+        var existingUser = USER;
+        when(userRepo.findByEmail(USER.getEmail())).thenReturn(Optional.of(existingUser));
         var existingCredentials = new UserCredentials(existingUser, "pw");
         // simulate email being sent a few moments ago
         existingCredentials.updateLastRequestedConfirmationEmailTimestamp();
 
         when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.of(existingCredentials));
 
-        var result = authService.register(new RegisterCredentialsRequestDto("x", email, "pw"));
+        var result = authService.register(new RegisterCredentialsRequestDto("x", USER.getEmail(), "pw"));
 
         assertEquals(Result.failure(new Failure(FailureReason.TOO_MANY_REQUESTS,
                 "Can't resend confirmation email now, please try again in few minutes")), result);
@@ -116,31 +115,30 @@ public class AuthServiceTest {
 
     @Test
     void register_WHEN_lastEmailOldEnough_THEN_schedulesNewEmail() {
-        var email = "e";
-        var existingUser = new User(email, "x");
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
+        var existingUser = USER;
+        when(userRepo.findByEmail(USER.getEmail())).thenReturn(Optional.of(existingUser));
         var existingCredentials = new UserCredentials(existingUser, "pw");
         when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.of(existingCredentials));
 
-        authService.register(new RegisterCredentialsRequestDto("u", email, "pw"));
+        authService.register(new RegisterCredentialsRequestDto("u", USER.getEmail(), "pw"));
 
         verify(userCredentialsService).scheduleConfirmationEmail(existingCredentials);
     }
 
     @Test
     void GIVEN_emailExistsButNoCredentials_WHEN_register_THEN_linkCredentialsToUser() {
-        var email = "e";
+        var existingEmail = "email";
         var existingUsername = "oldUsername";
-        var existingUser = new User(email, existingUsername);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(existingUser));
+        var existingUser = new User(existingEmail, existingUsername);
+        when(userRepo.findByEmail(existingEmail)).thenReturn(Optional.of(existingUser));
         when(userCredentialsService.findByUserId(existingUser)).thenReturn(Optional.empty());
 
         when(userCredentialsService.createCredentialsForUser(any(), any()))
-                .thenReturn(new UserCredentials(new User("e", "u"), "encodedPw"));
+                .thenReturn(new UserCredentials(USER, "encodedPw"));
 
-        var result = authService.register(new RegisterCredentialsRequestDto("newUsername", email, "pw"));
+        var result = authService.register(new RegisterCredentialsRequestDto("newUsername", existingEmail, "pw"));
 
-        assertEquals(email, result.success().getEmail());
+        assertEquals(existingEmail, result.success().getEmail());
         // existing username should not be overridden by the new username, we should ignore the new username.
         assertEquals(existingUsername, result.success().getUsername());
     }
@@ -156,7 +154,7 @@ public class AuthServiceTest {
 
     @Test
     void login_returnsFailure_whenNoCredentials() {
-        when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
+        when(userRepo.findByEmail(any())).thenReturn(Optional.of(USER));
         when(userCredentialsService.findByUserId(any())).thenReturn(Optional.empty());
 
         var result = authService.login(new CredentialsLoginRequestDto("email", "pw"));
@@ -165,9 +163,13 @@ public class AuthServiceTest {
     }
 
     @Test
-    void login_returnsFailure_whenIncorrectPassword() {
+    void GIVEN_emailVerified_WHEN_loginWithIncorrectPass_RETURN_http404() {
+        var userCredentials = new UserCredentials(USER, "pw");
+        // simulate email is verified
+        userCredentials.setEmailVerified();
+
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
-        when(userCredentialsService.findByUserId(any())).thenReturn(Optional.of(mock(UserCredentials.class)));
+        when(userCredentialsService.findByUserId(any())).thenReturn(Optional.of(userCredentials));
         when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
         var result = authService.login(new CredentialsLoginRequestDto("email", "pw"));
@@ -176,9 +178,25 @@ public class AuthServiceTest {
     }
 
     @Test
-    void login_returnsTokens_whenValidLogin() {
+    void GIVEN_emailNotVerified_WHEN_validLogin_RETURN_http404() {
+        var userCredentials = new UserCredentials(USER, "pw");
+
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
-        when(userCredentialsService.findByUserId(any())).thenReturn(Optional.of(mock(UserCredentials.class)));
+        when(userCredentialsService.findByUserId(any())).thenReturn(Optional.of(userCredentials));
+
+        var result = authService.login(new CredentialsLoginRequestDto("email", "pw"));
+
+        assertEquals(Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data")), result);
+    }
+
+    @Test
+    void GIVEN_emailVerified_WHEN_validLogin_RETURN_tokens() {
+        var userCredentials = new UserCredentials(USER, "pw");
+        // simulate email is verified
+        userCredentials.setEmailVerified();
+
+        when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
+        when(userCredentialsService.findByUserId(any())).thenReturn(Optional.of(userCredentials));
         when(passwordEncoder.matches(any(), any())).thenReturn(true);
         when(jwtUtil.generateAccessToken(any())).thenReturn("access");
         when(jwtUtil.generateRefreshToken(any())).thenReturn("refresh");

@@ -171,9 +171,13 @@ class AuthControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void login_returnsHttp404_whenIncorrectPassword() {
+    void GIVEN_emailVerified_WHEN_loginWithIncorrectPass_RETURN_http404() {
         registrationService.register(new RegisterCredentialsRequestDto("name", "email", "pw1"));
         var requestDto = new CredentialsLoginRequestDto("email", "pw2");
+        // simulate user verifying email
+        var userCredentials = userCredentialsRepo.findAll().iterator().next();
+        userCredentials.setEmailVerified();
+        userCredentialsRepo.save(userCredentials);
 
         restTestClient.post()
                 .uri("/api/login")
@@ -189,10 +193,32 @@ class AuthControllerIntegrationTest extends IntegrationTest {
     }
 
     @Test
-    void login_returnsTokensInCookiesWhenValidLogin() {
+    void GIVEN_emailNotVerified_WHEN_validLogin_RETURN_http404() {
         registrationService.register(new RegisterCredentialsRequestDto("name", "email", "pw1"));
-        var requestDto = new CredentialsLoginRequestDto("email", "pw1");
 
+        var requestDto = new CredentialsLoginRequestDto("email", "pw1");
+        restTestClient.post()
+                .uri("/api/login")
+                .body(requestDto)
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    Assertions.assertEquals(HttpStatus.NOT_FOUND.value(), error.getResponseBody().status());
+                    Assertions.assertEquals("NOT_FOUND", error.getResponseBody().error());
+                    Assertions.assertEquals("Incorrect login data", error.getResponseBody().message());
+                    Assertions.assertEquals("/api/login", error.getResponseBody().path());
+                });
+    }
+
+    @Test
+    void GIVEN_emailVerified_WHEN_validLogin_RETURN_tokensInCookies() {
+        registrationService.register(new RegisterCredentialsRequestDto("name", "email", "pw1"));
+        // simulate user verifying email
+        var userCredentials = userCredentialsRepo.findAll().iterator().next();
+        userCredentials.setEmailVerified();
+        userCredentialsRepo.save(userCredentials);
+
+        var requestDto = new CredentialsLoginRequestDto("email", "pw1");
         restTestClient.post()
                 .uri("/api/login")
                 .body(requestDto)
