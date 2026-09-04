@@ -29,6 +29,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/login").permitAll()
                                 .requestMatchers("/api/oauth2/**").permitAll()
                                 .requestMatchers("/api/refresh").permitAll()
+                                .requestMatchers("/api/verify-email").permitAll()
                                 .requestMatchers("/error").permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
                                 .anyRequest().authenticated()
