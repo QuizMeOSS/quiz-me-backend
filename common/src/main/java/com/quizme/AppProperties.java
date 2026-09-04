@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 public class AppProperties {
     private final Auth auth = new Auth();
     private final Kafka kafka = new Kafka();
+    private String frontendUrl;
 
     public Auth getAuth() {
         return auth;
@@ -17,6 +18,13 @@ public class AppProperties {
         return kafka;
     }
 
+    public String getFrontendUrl() {
+        return frontendUrl;
+    }
+
+    public void setFrontendUrl(String url) {
+        this.frontendUrl = url;
+    }
 
     public static class Auth {
         private String pepper;
