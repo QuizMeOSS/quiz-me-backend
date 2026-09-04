@@ -35,7 +35,8 @@ class OutboxEventsConsumerTest extends IntegrationTest {
     @Test
     void verifyHappyScenario() throws Exception {
         var signupEvent = new OutboxEvent(OutboxEventTypes.SIGN_UP, """
-                {"email": "to@mail.com"}
+                {"email": "to@mail.com",
+                "confirmationToken":"token"}
                 """);
 
         eventPublisher.publish(signupEvent);
@@ -51,7 +52,8 @@ class OutboxEventsConsumerTest extends IntegrationTest {
     @Test
     void messageConsumptionIsIdempotent() throws Exception {
         var signupEvent = new OutboxEvent(OutboxEventTypes.SIGN_UP, """
-                {"email": "to@mail.com"}
+                {"email": "to@mail.com",
+                "confirmationToken":"token"}
                 """);
 
         eventPublisher.publish(signupEvent);
@@ -67,7 +69,8 @@ class OutboxEventsConsumerTest extends IntegrationTest {
     @Test
     void WHEN_eventProcessingFails_THEN_eventIsRetried() throws Exception {
         var signupEvent = new OutboxEvent(OutboxEventTypes.SIGN_UP, """
-                {"email": "to@mail.com"}
+                {"email": "to@mail.com",
+                "confirmationToken":"token"}
                 """);
         // throw on first try and succeed on second try
         doThrow(new MessagingException())

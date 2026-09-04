@@ -31,6 +31,10 @@ public class UserCredentials {
         this.password = password;
     }
 
+    public long getId() {
+        return id;
+    }
+
     public User getUser() {
         return userId;
     }

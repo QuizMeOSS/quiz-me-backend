@@ -16,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -44,7 +43,7 @@ class TokenToUserFilterTest {
     @Test
     void testChainNextIsInvokedWhenAuthenticated() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of(""));
-        when(jwtUtil.getUsername(any())).thenReturn("email");
+        when(jwtUtil.getTokenSubject(any())).thenReturn("email");
         when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername(any())).thenReturn(mock(UserDetails.class));
 
@@ -78,13 +77,13 @@ class TokenToUserFilterTest {
 
         filter.doFilterInternal(mockRequest, mockResponse, mockChain);
 
-        verify(jwtUtil).getUsername("theToken");
+        verify(jwtUtil).getTokenSubject("theToken");
     }
 
     @Test
     void testUserLoadedByName() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
-        when(jwtUtil.getUsername("theToken")).thenReturn("theUser");
+        when(jwtUtil.getTokenSubject("theToken")).thenReturn("theUser");
         when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername("theUser")).thenReturn(mock(UserDetails.class));
 
@@ -99,7 +98,7 @@ class TokenToUserFilterTest {
     @Test
     void testSecurityContextHoldsAuthenticatedUser() throws ServletException, IOException {
         when(cookieUtil.getCookieValue(mockRequest, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)).thenReturn(Optional.of("theToken"));
-        when(jwtUtil.getUsername("theToken")).thenReturn("theUser");
+        when(jwtUtil.getTokenSubject("theToken")).thenReturn("theUser");
         when(jwtUtil.isValid(any())).thenReturn(true);
         when(userDetailsService.loadUserByUsername("theUser")).thenReturn(
                 User.builder()

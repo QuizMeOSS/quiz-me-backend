@@ -2,6 +2,7 @@ package com.quizme;
 
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
+import com.quizme.dto.VerifyEmailRequestDto;
 import com.quizme.entities.User;
 import com.quizme.exceptionhandler.ApiError;
 import com.quizme.exceptionhandler.result.FailureReason;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Date;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -298,5 +300,54 @@ class AuthControllerIntegrationTest extends IntegrationTest {
                             "Refresh token has expired",
                             "/api/refresh"), error.getResponseBody());
                 });
+    }
+
+    @Test
+    void GIVEN_invalidToken_WHEN_verifyEmail_RETURNS_http400() {
+        registrationService.register(new RegisterCredentialsRequestDto(user.getUsername(), user.getEmail(), "pw"));
+        var verificationToken = Jwts.builder()
+                .subject(userCredentialsRepo.findByUserId(user).get().getId() + "")
+                .issuedAt(new Date())
+                .expiration(new Date(new Date().getTime() + 100000))
+                .signWith(Keys.hmacShaKeyFor("invalid_signing_key_should_cause_error_when_parsing"
+                        .getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        var dto = new VerifyEmailRequestDto(verificationToken);
+
+        restTestClient.post()
+                .uri("/api/verify-email")
+                .body(dto)
+                .exchange()
+                .expectBody(ApiError.class)
+                .consumeWith(error -> {
+                    Assertions.assertEquals(new ApiError(HttpStatus.BAD_REQUEST.value(),
+                            FailureReason.VALIDATION_FAILED.name(),
+                            "Invalid email verification token",
+                            "/api/verify-email"), error.getResponseBody());
+                });
+    }
+
+    @Test
+    void GIVEN_validToken_WHEN_verifyEmail_THEN_emailVerified() {
+        registrationService.register(new RegisterCredentialsRequestDto(user.getUsername(), user.getEmail(), "pw"));
+        var verificationToken = Jwts.builder()
+                .subject(userCredentialsRepo.findByUserId(user).get().getId() + "")
+                .issuedAt(new Date())
+                .expiration(new Date(new Date().getTime() + 100000))
+                .signWith(Keys.hmacShaKeyFor(appProperties.getAuth().getJwt().getSecret()
+                        .getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        var dto = new VerifyEmailRequestDto(verificationToken);
+
+        restTestClient.post()
+                .uri("/api/verify-email")
+                .body(dto)
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful();
+
+        assertTrue(userCredentialsRepo.findByUserId(user).get().isEmailVerified());
     }
 }

@@ -1,9 +1,6 @@
 package com.quizme;
 
-import com.quizme.dto.CredentialsLoginRequestDto;
-import com.quizme.dto.RegisterCredentialsRequestDto;
-import com.quizme.dto.SsoLoginDto;
-import com.quizme.dto.TokensDto;
+import com.quizme.dto.*;
 import com.quizme.entities.ExternalIdentity;
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;
@@ -198,5 +195,15 @@ public class AuthService {
         var accessToken = jwtUtil.generateAccessToken(user.getEmail());
         var refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
         return new TokensDto(accessToken, refreshToken);
+    }
+
+    public Result<Void> verifyEmail(VerifyEmailRequestDto dto) {
+        var credentialsId = jwtUtil.getTokenSubject(dto.token());
+        if (credentialsId == null) {
+            return Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
+                    "Invalid email verification token"));
+        }
+        userCredentialsService.verifyEmail(Long.parseLong(credentialsId));
+        return Result.success(null);
     }
 }

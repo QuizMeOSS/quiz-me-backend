@@ -3,6 +3,7 @@ package com.quizme;
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
 import com.quizme.dto.SsoLoginDto;
+import com.quizme.dto.VerifyEmailRequestDto;
 import com.quizme.entities.ExternalIdentity;
 import com.quizme.entities.User;
 import com.quizme.entities.UserCredentials;
@@ -13,16 +14,25 @@ import com.quizme.outbox.OutboxService;
 import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.JwtUtil;
+import org.aspectj.lang.annotation.Before;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,13 +54,26 @@ public class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private TransactionTemplate transactionTemplate;
-    @Mock
-    private JwtUtil jwtUtil;
+    private static AppProperties appProperties;
     @Mock
     private OutboxService outboxService;
 
-    @InjectMocks
+    private JwtUtil jwtUtil;
+
     private AuthService authService;
+
+    @BeforeAll
+    static void setupClass() throws IOException {
+        appProperties = UnitTestUtils.initAppProperties();
+    }
+
+    @BeforeEach
+    void setup() {
+        jwtUtil = new JwtUtil(appProperties);
+
+        authService = new AuthService(userRepo, userCredentialsService, externalIdentityRepo,
+                transactionTemplate, passwordEncoder, jwtUtil);
+    }
 
     @Test
     void register_WHEN_uniqueUsernameAndEmail_THEN_registersNewUser() {
@@ -198,13 +221,11 @@ public class AuthServiceTest {
         when(userRepo.findByEmail(any())).thenReturn(Optional.of(mock(User.class)));
         when(userCredentialsService.findByUserId(any())).thenReturn(Optional.of(userCredentials));
         when(passwordEncoder.matches(any(), any())).thenReturn(true);
-        when(jwtUtil.generateAccessToken(any())).thenReturn("access");
-        when(jwtUtil.generateRefreshToken(any())).thenReturn("refresh");
 
         var result = authService.login(new CredentialsLoginRequestDto("email", "pw"));
 
-        assertEquals("access", result.success().accessToken());
-        assertEquals("refresh", result.success().refreshToken());
+        assertNotNull(result.success().accessToken());
+        assertNotNull(result.success().refreshToken());
     }
 
     @Test
@@ -250,8 +271,6 @@ public class AuthServiceTest {
         User user = new User(userEmail, username);
         when(userRepo.findByEmail(any())).thenReturn(Optional.empty());
         when(transactionTemplate.execute(any())).thenReturn(user);
-        when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
-        when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
 
         // act
         var tokens = authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
@@ -318,8 +337,6 @@ public class AuthServiceTest {
         User user = new User(userEmail, username);
         when(userRepo.findByEmail(userEmail)).thenReturn(Optional.of(user));
         when(externalIdentityRepo.findByUserId(user)).thenReturn(List.of());
-        when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
-        when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
 
         // act
         var tokens = authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
@@ -341,8 +358,6 @@ public class AuthServiceTest {
         when(externalIdentityRepo.findByUserId(user)).thenReturn(List.of(
                 new ExternalIdentity(user, provider, providerUserId, username, userEmail)
         ));
-        when(jwtUtil.generateAccessToken(userEmail)).thenReturn("accessToken");
-        when(jwtUtil.generateRefreshToken(userEmail)).thenReturn("refreshToken");
 
         // act
         var tokens = authService.ssoRegisterOrLogin(new SsoLoginDto(userEmail, username, provider, providerUserId));
@@ -351,6 +366,24 @@ public class AuthServiceTest {
         assertNotNull(tokens.accessToken());
         assertNotNull(tokens.refreshToken());
 
+    }
+
+    @Test
+    void GIVEN_invalidToken_WHEN_verifyEmail_RETURN_failure() {
+        var result = authService.verifyEmail(new VerifyEmailRequestDto("invalidToken"));
+        assertEquals(Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
+                        "Invalid email verification token")),
+                result);
+    }
+
+    @Test
+    void GIVEN_validToken_WHEN_verifyEmail_RETURN_emailVerified() {
+        var credentialsToVerify = 123;
+        var token = jwtUtil.generateToken(String.valueOf(credentialsToVerify), 10000L);
+        var result = authService.verifyEmail(new VerifyEmailRequestDto(token));
+
+        verify(userCredentialsService).verifyEmail(credentialsToVerify);
+        assertEquals(Result.success(null), result);
     }
 
 }

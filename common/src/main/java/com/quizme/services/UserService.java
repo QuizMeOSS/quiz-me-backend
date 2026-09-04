@@ -44,7 +44,7 @@ public class UserService implements UserDetailsService {
         if (isExpired) {
             return Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Refresh token has expired"));
         }
-        var userOpt = userRepo.findByEmail(jwtUtil.getUsername(refreshToken));
+        var userOpt = userRepo.findByEmail(jwtUtil.getTokenSubject(refreshToken));
         return userOpt.map(user -> Result.success(generateTokensForUser(user)))
                 // This shouldn't happen, because it means we issued a refresh token for non-existent user
                 .orElseGet(() -> Result.failure(new Failure(FailureReason.VALIDATION_FAILED, "Couldn't refresh token")));

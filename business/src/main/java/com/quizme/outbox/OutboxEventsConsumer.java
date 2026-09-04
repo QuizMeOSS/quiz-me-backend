@@ -1,7 +1,9 @@
 package com.quizme.outbox;
 
+import com.quizme.AppProperties;
 import com.quizme.email.EmailService;
 import com.quizme.idempotency.IdempotencyService;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,15 +26,18 @@ public class OutboxEventsConsumer {
     private final IdempotencyService idempotencyService;
     private final EmailService emailService;
     private final TemplateEngine templateEngine;
+    private final AppProperties appProperties;
 
     public OutboxEventsConsumer(ObjectMapper objectMapper,
                                 IdempotencyService idempotencyService,
                                 EmailService emailService,
-                                TemplateEngine templateEngine) {
+                                TemplateEngine templateEngine,
+                                AppProperties appProperties) {
         this.objectMapper = objectMapper;
         this.idempotencyService = idempotencyService;
         this.emailService = emailService;
         this.templateEngine = templateEngine;
+        this.appProperties = appProperties;
 
     }
 
@@ -77,10 +82,14 @@ public class OutboxEventsConsumer {
 
     private void sendConfirmationEmail(JsonNode event) throws MessagingException {
         Context context = new Context();
-        // TODO: confirmationLink as payload param
-        context.setVariable("confirmationLink", "www.google.com");
+        context.setVariable("confirmationLink", formConfirmationLink(event.get("confirmationToken").asString()));
         var emailBody = templateEngine.process("signup-confirmation", context);
 
         emailService.sendHtmlEmail(event.get("email").asString(), "Complete your account creation", emailBody);
+    }
+
+    @NonNull
+    private String formConfirmationLink(String confirmationToken) {
+        return appProperties.getFrontendUrl() + "/verify-email?token=" + confirmationToken;
     }
 }

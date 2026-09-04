@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +37,8 @@ public class JwtUtil {
         return generateToken(subject, refreshTokenDurationMillis);
     }
 
-    private String generateToken(String subject, long accessTokenDurationMillis) {
+    @NonNull
+    public String generateToken(String subject, long accessTokenDurationMillis) {
         var date = new Date();
         return Jwts.builder()
                 .subject(subject)
@@ -47,7 +49,7 @@ public class JwtUtil {
     }
 
     @Nullable
-    public String getUsername(String token) {
+    public String getTokenSubject(String token) {
         var tokenClaims = getTokenClaims(token);
         if (tokenClaims == null) {
             return null;
