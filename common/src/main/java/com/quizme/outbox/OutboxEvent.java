@@ -14,7 +14,7 @@ public class OutboxEvent {
     private OutboxEventTypes type;
     private String payload;
     @Enumerated(EnumType.STRING)
-    private OutboxStatus status;
+    private OutboxStatus status = OutboxStatus.PENDING;
     private LocalDateTime createdAt;
     private int retryCount;
 
@@ -24,7 +24,6 @@ public class OutboxEvent {
     public OutboxEvent(OutboxEventTypes type, String payload) {
         this.type = type;
         this.payload = payload;
-        status = OutboxStatus.PENDING;
         createdAt = LocalDateTime.now();
     }
 
@@ -54,5 +53,9 @@ public class OutboxEvent {
 
     public void incrementRetryCount() {
         retryCount += 1;
+    }
+
+    public OutboxStatus getStatus(){
+        return status;
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * Abstracts publishing the outbox events to message queue.
  * <p>
@@ -21,7 +23,7 @@ public class OutboxEventPublisher {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void publish(OutboxEvent event) throws Exception {
+    public void publish(OutboxEvent event) throws ExecutionException, InterruptedException {
         var message = MessageBuilder
                 .withPayload(event.getPayload())
                 .setHeader(KafkaHeaders.TOPIC, TOPIC)
