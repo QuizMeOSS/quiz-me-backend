@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class OutboxRelay {
@@ -38,7 +39,7 @@ public class OutboxRelay {
                 publisher.publish(event);
                 event.markAsProcessed();
                 LOGGER.info("Published event {} of type {} to queue", event.getId(), event.getType());
-            } catch (Exception e) {
+            } catch (ExecutionException | InterruptedException e) {
                 event.incrementRetryCount();
                 if (event.getRetryCount() >= MAX_RETRIES) {
                     event.markAsFailed();

@@ -2,6 +2,7 @@ package com.quizme;
 
 import com.quizme.dto.CredentialsLoginRequestDto;
 import com.quizme.dto.RegisterCredentialsRequestDto;
+import com.quizme.dto.VerifyEmailRequestDto;
 import com.quizme.exceptionhandler.ApiError;
 import com.quizme.mappers.ResultToResponseEntityMapper;
 import com.quizme.utils.CookieUtil;
@@ -76,5 +77,16 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .build();
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequestDto dto, HttpServletRequest request) {
+        var result = authService.verifyEmail(dto);
+
+        if (result.failure() != null) {
+            return responseMapper.map(result, request.getRequestURI());
+        }
+
+        return ResponseEntity.ok().build();
     }
 }

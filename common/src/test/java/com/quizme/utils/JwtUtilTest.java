@@ -123,19 +123,19 @@ class JwtUtilTest {
     }
 
     @Test
-    void getUserName_ReturnsSubject() {
+    void GIVEN_validToken_WHEN_getTokenSubject_RETURN_subject() {
         var token = jwtUtil.generateAccessToken(SUBJECT);
 
-        var username = jwtUtil.getUsername(token);
+        var username = jwtUtil.getTokenSubject(token);
 
         assertEquals(SUBJECT, username);
     }
 
     @Test
-    void getUserName_WHEN_malformedToken_ReturnsNull() {
+    void GIVEN_malformedToken_WHEN_getTokenSubject_RETURN_null() {
         var token = "abc";
 
-        var username = jwtUtil.getUsername(token);
+        var username = jwtUtil.getTokenSubject(token);
 
         assertNull(username);
     }

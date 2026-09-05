@@ -40,7 +40,7 @@ public class TokenToUserFilter extends OncePerRequestFilter {
         cookieUtil.getCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME)
                 .filter(jwtUtil::isValid)
                 .ifPresent(token -> {
-                    String username = jwtUtil.getUsername(token);
+                    String username = jwtUtil.getTokenSubject(token);
                     if (username == null) {
                         return;
                     }

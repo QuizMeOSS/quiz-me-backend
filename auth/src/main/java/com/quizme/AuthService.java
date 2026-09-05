@@ -1,16 +1,12 @@
 package com.quizme;
 
-import com.quizme.dto.CredentialsLoginRequestDto;
-import com.quizme.dto.RegisterCredentialsRequestDto;
-import com.quizme.dto.SsoLoginDto;
-import com.quizme.dto.TokensDto;
+import com.quizme.dto.*;
 import com.quizme.entities.ExternalIdentity;
 import com.quizme.entities.User;
+import com.quizme.entities.UserCredentials;
 import com.quizme.exceptionhandler.result.Failure;
 import com.quizme.exceptionhandler.result.FailureReason;
 import com.quizme.exceptionhandler.result.Result;
-import com.quizme.outbox.OutboxEventTypes;
-import com.quizme.outbox.OutboxService;
 import com.quizme.repos.ExternalIdentityRepo;
 import com.quizme.repos.UserRepo;
 import com.quizme.utils.JwtUtil;
@@ -19,11 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Map;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 public class AuthService {
+
+    // avoid overwhelming the email service - wait 2 minutes before resending confirmation email
+    private static final int CONFIRMATION_EMAIL_BACKOFF = 2;
 
     private final UserRepo userRepo;
     private final UserCredentialsService userCredentialsService;
@@ -31,22 +31,19 @@ public class AuthService {
     private final TransactionTemplate transactionTemplate;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final OutboxService outboxService;
 
     public AuthService(UserRepo userRepo,
                        UserCredentialsService userCredentialsService,
                        ExternalIdentityRepo externalIdentityRepo,
                        TransactionTemplate transactionTemplate,
                        PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil,
-                       OutboxService outboxService) {
+                       JwtUtil jwtUtil) {
         this.userRepo = userRepo;
         this.userCredentialsService = userCredentialsService;
         this.externalIdentityRepo = externalIdentityRepo;
         this.transactionTemplate = transactionTemplate;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-        this.outboxService = outboxService;
     }
 
     /**
@@ -83,10 +80,21 @@ public class AuthService {
     private Result<User> handleExistingEmail(RegisterCredentialsRequestDto request, User userWithSameEmail) {
         var credentials = userCredentialsService.findByUserId(userWithSameEmail);
         if (credentials.isPresent()) {
-            return Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "This email is already registered"));
+            if (credentials.get().isEmailVerified()) {
+                return Result.failure(new Failure(FailureReason.ALREADY_EXISTS, "This email is already registered"));
+            } else {
+                var isConfirmationEmailScheduled = scheduleConfirmationEmail(credentials.get());
+                if (isConfirmationEmailScheduled) {
+                    return Result.success(userWithSameEmail);
+                } else {
+                    return Result.failure(new Failure(FailureReason.TOO_MANY_REQUESTS,
+                            "Can't resend confirmation email now, please try again in few minutes"));
+                }
+            }
         }
         // Link new credentials to the existing user
-        userCredentialsService.createCredentialsForUser(userWithSameEmail, request.password());
+        var createdCredentials = userCredentialsService.createCredentialsForUser(userWithSameEmail, request.password());
+        scheduleConfirmationEmail(createdCredentials);
         return Result.success(userWithSameEmail);
     }
 
@@ -97,15 +105,22 @@ public class AuthService {
         // so we use TransactionTemplate instead
         var transactionResult = transactionTemplate.execute((TransactionCallback<Object>) _ -> {
             User user = userRepo.save(new User(request.email(), request.username()));
-            userCredentialsService.createCredentialsForUser(user, request.password());
-            var payload = Map.of(
-                    "email", request.email()
-            );
-            outboxService.saveEvent(OutboxEventTypes.SIGN_UP, payload);
+            var credentials = userCredentialsService.createCredentialsForUser(user, request.password());
+            scheduleConfirmationEmail(credentials);
             return user;
         });
 
         return (User) transactionResult;
+    }
+
+    private boolean scheduleConfirmationEmail(UserCredentials credentials) {
+        var lastScheduledEmail = credentials.getLastRequestedConfirmationEmailTimestamp();
+        if (lastScheduledEmail != null
+                && Duration.between(lastScheduledEmail, LocalDateTime.now()).toMinutes() < CONFIRMATION_EMAIL_BACKOFF) {
+            return false;
+        }
+        userCredentialsService.scheduleConfirmationEmail(credentials);
+        return true;
     }
 
     /**
@@ -116,19 +131,26 @@ public class AuthService {
      */
     public Result<TokensDto> login(CredentialsLoginRequestDto body) {
         var userOptional = userRepo.findByEmail(body.email());
+        var errorMessage = "Incorrect login data";
         if (userOptional.isEmpty()) {
-            return Result.failure(new Failure(FailureReason.NOT_FOUND, "Incorrect login data"));
+            return Result.failure(new Failure(FailureReason.NOT_FOUND, errorMessage));
         }
         var user = userOptional.get();
         var userCredentialsOptional = userCredentialsService.findByUserId(user);
         if (userCredentialsOptional.isEmpty()) {
             return Result.failure(new Failure(FailureReason.NOT_FOUND,
-                    "Incorrect login data"));
+                    errorMessage));
         }
 
-        if (!passwordEncoder.matches(body.password(), userCredentialsOptional.get().getPassword())) {
+        var userCredentials = userCredentialsOptional.get();
+        if (!userCredentials.isEmailVerified()) {
             return Result.failure(new Failure(FailureReason.NOT_FOUND,
-                    "Incorrect login data"));
+                    errorMessage));
+        }
+
+        if (!passwordEncoder.matches(body.password(), userCredentials.getPassword())) {
+            return Result.failure(new Failure(FailureReason.NOT_FOUND,
+                    errorMessage));
         }
 
         return Result.success(generateTokensForUser(user));
@@ -173,5 +195,15 @@ public class AuthService {
         var accessToken = jwtUtil.generateAccessToken(user.getEmail());
         var refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
         return new TokensDto(accessToken, refreshToken);
+    }
+
+    public Result<Void> verifyEmail(VerifyEmailRequestDto dto) {
+        var credentialsId = jwtUtil.getTokenSubject(dto.token());
+        if (credentialsId == null) {
+            return Result.failure(new Failure(FailureReason.VALIDATION_FAILED,
+                    "Invalid email verification token"));
+        }
+        userCredentialsService.verifyEmail(Long.parseLong(credentialsId));
+        return Result.success(null);
     }
 }
