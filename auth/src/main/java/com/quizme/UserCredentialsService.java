@@ -54,11 +54,11 @@ public class UserCredentialsService {
 
     @Transactional
     public void scheduleConfirmationEmail(UserCredentials userCredentials) {
+        userCredentials.updateLastRequestedConfirmationEmailTimestamp();
         userCredentials = userCredentialsRepo.save(userCredentials); // get row id
         var confirmationToken = generateEmailConfirmationToken(
                 userCredentials.getId()
         );
-        userCredentials.updateLastRequestedConfirmationEmailTimestamp();
         var payload = Map.of(
                 "email", userCredentials.getUser().getEmail(),
                 "confirmationToken", confirmationToken
